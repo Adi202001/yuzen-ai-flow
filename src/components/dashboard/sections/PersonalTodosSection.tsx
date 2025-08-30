@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -11,347 +10,249 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { 
   Plus, 
-  Filter, 
-  Calendar,
-  CheckSquare,
+  Search,
+  Circle,
+  CheckCircle2,
   Clock,
-  AlertCircle,
-  LayoutGrid,
-  List,
-  MoreHorizontal
+  Edit3,
+  Trash2
 } from "lucide-react";
 
 const personalTodos = [
   {
     id: 1,
-    title: "Review quarterly performance metrics",
-    description: "Analyze team performance data and prepare summary report",
-    priority: "high",
-    status: "todo",
-    dueDate: "2024-01-15",
-    tags: ["review", "performance"]
+    title: "Review quarterly performance",
+    content: "Analyze team performance data and prepare summary report for the leadership meeting next week.",
+    completed: false,
+    createdAt: "2024-01-10",
+    updatedAt: "2024-01-12"
   },
   {
     id: 2,
     title: "Schedule team one-on-ones",
-    description: "Book individual meetings with each team member for next week",
-    priority: "medium",
-    status: "in-progress",
-    dueDate: "2024-01-12",
-    tags: ["meetings", "team"]
+    content: "Book individual meetings with each team member for next week. Focus on career development and current project feedback.",
+    completed: false,
+    createdAt: "2024-01-08",
+    updatedAt: "2024-01-11"
   },
   {
     id: 3,
     title: "Complete expense reports",
-    description: "Submit travel and office supply expenses for December",
-    priority: "medium",
-    status: "completed",
-    dueDate: "2024-01-10",
-    tags: ["finance", "administrative"]
+    content: "Submit travel and office supply expenses for December. Include receipts for hotel stays and team dinner.",
+    completed: true,
+    createdAt: "2024-01-05",
+    updatedAt: "2024-01-10"
   },
   {
     id: 4,
     title: "Plan project roadmap",
-    description: "Outline milestones and deliverables for Q2 projects",
-    priority: "high",
-    status: "todo",
-    dueDate: "2024-01-20",
-    tags: ["planning", "strategy"]
+    content: "Outline milestones and deliverables for Q2 projects. Need to coordinate with product and design teams.",
+    completed: false,
+    createdAt: "2024-01-09",
+    updatedAt: "2024-01-12"
   },
   {
     id: 5,
     title: "Update LinkedIn profile",
-    description: "Add recent achievements and skills to professional profile",
-    priority: "low",
-    status: "todo",
-    dueDate: "2024-01-25",
-    tags: ["professional", "networking"]
+    content: "Add recent achievements and skills to professional profile. Include new certifications and project highlights.",
+    completed: false,
+    createdAt: "2024-01-07",
+    updatedAt: "2024-01-08"
+  },
+  {
+    id: 6,
+    title: "Grocery shopping",
+    content: "Pick up ingredients for weekend meal prep - salmon, vegetables, quinoa, and fruits.",
+    completed: false,
+    createdAt: "2024-01-12",
+    updatedAt: "2024-01-12"
   }
 ];
 
-const todoStats = {
-  total: personalTodos.length,
-  completed: personalTodos.filter(t => t.status === "completed").length,
-  inProgress: personalTodos.filter(t => t.status === "in-progress").length,
-  todo: personalTodos.filter(t => t.status === "todo").length
-};
-
 export function PersonalTodosSection() {
-  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [newTodoTitle, setNewTodoTitle] = useState("");
+  const [newTodoContent, setNewTodoContent] = useState("");
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return "bg-destructive text-destructive-foreground";
-      case "high":
-        return "bg-warning text-warning-foreground";
-      case "medium":
-        return "bg-accent text-accent-foreground";
-      case "low":
-        return "bg-muted text-muted-foreground";
-      default:
-        return "bg-muted text-muted-foreground";
+  const filteredTodos = personalTodos.filter(todo => 
+    todo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    todo.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleCreateTodo = () => {
+    if (newTodoTitle.trim()) {
+      // In a real app, this would create the todo
+      setNewTodoTitle("");
+      setNewTodoContent("");
+      setShowCreateDialog(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-success text-success-foreground";
-      case "in-progress":
-        return "bg-accent text-accent-foreground";
-      case "todo":
-        return "bg-muted text-muted-foreground";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
+  const toggleTodoComplete = (id: number) => {
+    // In a real app, this would update the todo status
+    console.log(`Toggle todo ${id}`);
   };
 
-  const filteredTodos = selectedFilter === "all" 
-    ? personalTodos 
-    : personalTodos.filter(todo => todo.status === selectedFilter);
 
-  const todosByStatus = {
-    todo: personalTodos.filter(todo => todo.status === "todo"),
-    "in-progress": personalTodos.filter(todo => todo.status === "in-progress"),
-    completed: personalTodos.filter(todo => todo.status === "completed")
-  };
-
-  const renderTodoCard = (todo: any, showStatus = true) => (
-    <div
-      key={todo.id}
-      className="p-4 rounded-lg border border-border bg-card-elevated hover:shadow-smooth transition-all duration-200 mb-4"
-    >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <h4 className="font-semibold text-foreground mb-1">{todo.title}</h4>
-          <p className="text-sm text-muted-foreground mb-3">{todo.description}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            {todo.tags.map((tag: string) => (
-              <Badge key={tag} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          {showStatus && (
-            <Badge className={getStatusColor(todo.status)}>
-              {todo.status.replace("-", " ").toUpperCase()}
-            </Badge>
-          )}
-          <Badge className={getPriorityColor(todo.priority)}>
-            {todo.priority.toUpperCase()}
-          </Badge>
-        </div>
-      </div>
-      
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Calendar className="h-4 w-4" />
-          <span>Due: {new Date(todo.dueDate).toLocaleDateString()}</span>
-        </div>
-        <Button variant="ghost" size="sm">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderListView = () => (
-    <Card className="shadow-elegant">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CheckSquare className="h-6 w-6 text-primary" />
-          Personal Todos ({filteredTodos.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {filteredTodos.map((todo) => renderTodoCard(todo))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const renderKanbanView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {Object.entries(todosByStatus).map(([status, todos]) => (
-        <Card key={status} className="shadow-elegant">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between">
-              <span className="text-base font-medium">
-                {status.replace("-", " ").toUpperCase()}
-              </span>
-              <Badge variant="secondary" className="text-xs">
-                {todos.length}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {todos.map((todo) => renderTodoCard(todo, false))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="max-w-4xl mx-auto p-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Personal Todos</h1>
-          <p className="text-muted-foreground">Manage your personal tasks and goals</p>
+          <h1 className="text-2xl font-semibold text-foreground mb-2">Notes</h1>
+          <p className="text-muted-foreground text-sm">{filteredTodos.length} notes</p>
         </div>
-        <div className="flex gap-3">
-          <div className="flex items-center bg-muted rounded-lg p-1">
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "kanban" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("kanban")}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-          </div>
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button variant="hero" className="gap-2">
-                <Plus className="h-5 w-5" />
-                Add Todo
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Create Personal Todo</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Todo Title
-                  </label>
-                  <Input placeholder="Enter todo title..." />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Description
-                  </label>
-                  <Textarea placeholder="Todo description..." />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Priority
-                    </label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Due Date
-                    </label>
-                    <Input type="date" />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={() => setShowCreateDialog(false)}>
-                    Create Todo
-                  </Button>
-                </div>
+        <Button
+          onClick={() => setShowCreateDialog(true)}
+          className="bg-warning hover:bg-warning/90 text-warning-foreground rounded-full px-6 py-2 text-sm font-medium"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          New Note
+        </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          placeholder="Search notes..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 border-0 bg-background/50 rounded-lg text-sm"
+        />
+      </div>
+
+      {/* Notes Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredTodos.map((todo) => (
+          <div
+            key={todo.id}
+            className="bg-background rounded-lg p-4 border border-border/50 hover:border-border transition-colors cursor-pointer group"
+            onClick={() => toggleTodoComplete(todo.id)}
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleTodoComplete(todo.id);
+                }}
+                className="mt-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {todo.completed ? (
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                ) : (
+                  <Circle className="h-5 w-5" />
+                )}
+              </button>
+              <div className="flex-1 min-w-0">
+                <h3 className={`font-medium text-sm mb-2 line-clamp-2 ${
+                  todo.completed ? 'line-through text-muted-foreground' : 'text-foreground'
+                }`}>
+                  {todo.title}
+                </h3>
               </div>
-            </DialogContent>
-          </Dialog>
-          <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-            <SelectTrigger className="w-40">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Todos</SelectItem>
-              <SelectItem value="todo">To Do</SelectItem>
-              <SelectItem value="in-progress">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
+            </div>
+            
+            <p className={`text-xs leading-relaxed line-clamp-4 mb-3 ${
+              todo.completed ? 'text-muted-foreground/70' : 'text-muted-foreground'
+            }`}>
+              {todo.content}
+            </p>
+            
+            <div className="flex items-center justify-between text-xs text-muted-foreground/60">
+              <span>{new Date(todo.updatedAt).toLocaleDateString()}</span>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Edit functionality
+                  }}
+                  className="p-1 hover:bg-muted rounded"
+                >
+                  <Edit3 className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Delete functionality
+                  }}
+                  className="p-1 hover:bg-muted rounded text-destructive"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {filteredTodos.length === 0 && (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <Edit3 className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-medium text-foreground mb-2">No notes yet</h3>
+          <p className="text-muted-foreground mb-4">Create your first note to get started</p>
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            className="bg-warning hover:bg-warning/90 text-warning-foreground rounded-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Note
+          </Button>
         </div>
-      </div>
+      )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="shadow-elegant">
-          <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-accent-light rounded-lg mx-auto mb-4">
-              <CheckSquare className="h-6 w-6 text-accent" />
+      {/* Create Note Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>New Note</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Input
+                placeholder="Note title..."
+                value={newTodoTitle}
+                onChange={(e) => setNewTodoTitle(e.target.value)}
+                className="border-0 text-lg font-medium placeholder:text-muted-foreground focus-visible:ring-0 px-0"
+              />
             </div>
-            <h3 className="text-2xl font-bold text-foreground">{todoStats.total}</h3>
-            <p className="text-sm text-muted-foreground">Total Todos</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-elegant">
-          <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-success-light rounded-lg mx-auto mb-4">
-              <CheckSquare className="h-6 w-6 text-success" />
+            <div>
+              <Textarea
+                placeholder="Start writing..."
+                value={newTodoContent}
+                onChange={(e) => setNewTodoContent(e.target.value)}
+                className="border-0 resize-none min-h-[200px] placeholder:text-muted-foreground focus-visible:ring-0 px-0"
+              />
             </div>
-            <h3 className="text-2xl font-bold text-foreground">{todoStats.completed}</h3>
-            <p className="text-sm text-muted-foreground">Completed</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-elegant">
-          <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-warning-light rounded-lg mx-auto mb-4">
-              <Clock className="h-6 w-6 text-warning" />
+            <div className="flex justify-end gap-3 pt-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setShowCreateDialog(false);
+                  setNewTodoTitle("");
+                  setNewTodoContent("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleCreateTodo}
+                className="bg-warning hover:bg-warning/90 text-warning-foreground"
+                disabled={!newTodoTitle.trim()}
+              >
+                Save
+              </Button>
             </div>
-            <h3 className="text-2xl font-bold text-foreground">{todoStats.inProgress}</h3>
-            <p className="text-sm text-muted-foreground">In Progress</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-elegant">
-          <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-muted rounded-lg mx-auto mb-4">
-              <AlertCircle className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-2xl font-bold text-foreground">{todoStats.todo}</h3>
-            <p className="text-sm text-muted-foreground">To Do</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      {viewMode === "list" ? renderListView() : renderKanbanView()}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
