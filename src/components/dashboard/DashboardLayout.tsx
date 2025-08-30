@@ -34,6 +34,7 @@ const navigationItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "attendance", label: "Attendance", icon: Users },
   { id: "tasks", label: "Tasks", icon: CheckSquare },
+  { id: "personal-todos", label: "Personal Todos", icon: CheckSquare },
   { id: "files", label: "Files", icon: FileText },
   { id: "ai-assistant", label: "AI Assistant", icon: Bot },
 ];

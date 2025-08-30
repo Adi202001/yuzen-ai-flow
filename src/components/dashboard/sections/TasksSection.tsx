@@ -26,7 +26,9 @@ import {
   CheckSquare,
   Clock,
   AlertCircle,
-  TrendingUp
+  LayoutGrid,
+  List,
+  MoreHorizontal
 } from "lucide-react";
 
 const tasks = [
@@ -92,6 +94,7 @@ const taskStats = {
 export function TasksSection() {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -125,6 +128,12 @@ export function TasksSection() {
     ? tasks 
     : tasks.filter(task => task.status === selectedFilter);
 
+  const tasksByStatus = {
+    todo: tasks.filter(task => task.status === "todo"),
+    "in-progress": tasks.filter(task => task.status === "in-progress"),
+    completed: tasks.filter(task => task.status === "completed")
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -133,6 +142,22 @@ export function TasksSection() {
           <p className="text-muted-foreground">Organize and track project tasks with your team</p>
         </div>
         <div className="flex gap-3">
+          <div className="flex items-center bg-muted rounded-lg p-1">
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "kanban" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("kanban")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button variant="hero" className="gap-2">
@@ -260,63 +285,125 @@ export function TasksSection() {
         </Card>
       </div>
 
-      {/* Tasks List */}
-      <Card className="shadow-elegant">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckSquare className="h-6 w-6 text-primary" />
-            Tasks ({filteredTasks.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredTasks.map((task) => (
-              <div
-                key={task.id}
-                className="p-4 rounded-lg border border-border bg-card-elevated hover:shadow-smooth transition-all duration-200"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-1">{task.title}</h4>
-                    <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {task.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
+      {/* Main Content */}
+      {viewMode === "list" ? (
+        <Card className="shadow-elegant">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckSquare className="h-6 w-6 text-primary" />
+              Tasks ({filteredTasks.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {filteredTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="p-4 rounded-lg border border-border bg-card-elevated hover:shadow-smooth transition-all duration-200"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1">{task.title}</h4>
+                      <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {task.tags.map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge className={getStatusColor(task.status)}>
+                        {task.status.replace("-", " ").toUpperCase()}
+                      </Badge>
+                      <Badge className={getPriorityColor(task.priority)}>
+                        {task.priority.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <User className="h-4 w-4" />
+                        <span>{task.assignee}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {Object.entries(tasksByStatus).map(([status, statusTasks]) => (
+            <Card key={status} className="shadow-elegant">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="text-base font-medium">
+                    {status.replace("-", " ").toUpperCase()}
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {statusTasks.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {statusTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="p-4 rounded-lg border border-border bg-card-elevated hover:shadow-smooth transition-all duration-200"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-foreground mb-1">{task.title}</h4>
+                          <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {task.tags.map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <Badge className={getPriorityColor(task.priority)}>
+                          {task.priority.toUpperCase()}
                         </Badge>
-                      ))}
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1">
+                            <User className="h-4 w-4" />
+                            <span>{task.assignee}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <Badge className={getStatusColor(task.status)}>
-                      {task.status.replace("-", " ").toUpperCase()}
-                    </Badge>
-                    <Badge className={getPriorityColor(task.priority)}>
-                      {task.priority.toUpperCase()}
-                    </Badge>
-                  </div>
+                  ))}
                 </div>
-                
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      <span>{task.assignee}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

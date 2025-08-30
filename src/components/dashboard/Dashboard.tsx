@@ -3,6 +3,7 @@ import { DashboardLayout } from "./DashboardLayout";
 import { OverviewSection } from "./sections/OverviewSection";
 import { AttendanceSection } from "./sections/AttendanceSection";
 import { TasksSection } from "./sections/TasksSection";
+import { PersonalTodosSection } from "./sections/PersonalTodosSection";
 import { FilesSection } from "./sections/FilesSection";
 import { AIAssistantSection } from "./sections/AIAssistantSection";
 
@@ -17,6 +18,8 @@ export function Dashboard() {
         return <AttendanceSection />;
       case "tasks":
         return <TasksSection />;
+      case "personal-todos":
+        return <PersonalTodosSection />;
       case "files":
         return <FilesSection />;
       case "ai-assistant":
