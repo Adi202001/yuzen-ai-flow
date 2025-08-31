@@ -4,7 +4,9 @@ import {
   Users, 
   CheckSquare, 
   FileText, 
-  Bot,
+  MessageSquare,
+  Calendar,
+  ClipboardList,
   Menu,
   Bell,
   Search,
@@ -12,6 +14,7 @@ import {
   User,
   LogOut
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,17 +33,33 @@ interface DashboardLayoutProps {
   onSectionChange: (section: string) => void;
 }
 
-const navigationItems = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "attendance", label: "Attendance", icon: Users },
-  { id: "tasks", label: "Tasks", icon: CheckSquare },
-  { id: "personal-todos", label: "Personal Todos", icon: CheckSquare },
-  { id: "files", label: "Files", icon: FileText },
-  { id: "ai-assistant", label: "AI Assistant", icon: Bot },
-];
+const getNavigationItems = (userRole: string) => {
+  const baseItems = [
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "attendance", label: "Attendance", icon: Calendar },
+    { id: "tasks", label: "Tasks", icon: CheckSquare },
+    { id: "personal-todos", label: "Personal Todos", icon: ClipboardList },
+    { id: "files", label: "Files", icon: FileText },
+    { id: "messages", label: "Messages", icon: MessageSquare },
+    { id: "leave-requests", label: "Leave Requests", icon: ClipboardList },
+  ];
+
+  // Add admin/HR specific items
+  if (userRole === 'admin' || userRole === 'hr') {
+    baseItems.push(
+      { id: "users", label: "Users", icon: Users },
+      { id: "admin", label: "Admin Dashboard", icon: Settings }
+    );
+  }
+
+  return baseItems;
+};
 
 export function DashboardLayout({ children, activeSection, onSectionChange }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { user, profile, signOut } = useAuth();
+  
+  const navigationItems = getNavigationItems(profile?.role || 'employee');
 
   return (
     <div className="min-h-screen bg-gradient-surface">
@@ -81,7 +100,7 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
                   <Avatar className="h-10 w-10">
                     <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
                     <AvatarFallback className="bg-gradient-primary text-primary-foreground">
-                      U
+                      {profile?.name?.split(' ').map((n: string) => n[0]).join('') || user?.email?.[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -89,8 +108,8 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
               <DropdownMenuContent className="w-56 bg-popover border-border" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">John Doe</p>
-                    <p className="text-xs leading-none text-muted-foreground">john@company.com</p>
+                    <p className="text-sm font-medium leading-none">{profile?.name || 'User'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -103,7 +122,7 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-destructive">
+                <DropdownMenuItem className="cursor-pointer text-destructive" onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>

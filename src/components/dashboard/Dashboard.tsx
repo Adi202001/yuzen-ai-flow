@@ -5,7 +5,10 @@ import { AttendanceSection } from "./sections/AttendanceSection";
 import { TasksSection } from "./sections/TasksSection";
 import { PersonalTodosSection } from "./sections/PersonalTodosSection";
 import { FilesSection } from "./sections/FilesSection";
-import { AIAssistantSection } from "./sections/AIAssistantSection";
+import { MessagesSection } from "./sections/MessagesSection";
+import { LeaveRequestsSection } from "./sections/LeaveRequestsSection";
+import { UsersSection } from "./sections/UsersSection";
+import { AdminSection } from "./sections/AdminSection";
 
 export function Dashboard() {
   const [activeSection, setActiveSection] = useState("overview");
@@ -22,8 +25,14 @@ export function Dashboard() {
         return <PersonalTodosSection />;
       case "files":
         return <FilesSection />;
-      case "ai-assistant":
-        return <AIAssistantSection />;
+      case "messages":
+        return <MessagesSection />;
+      case "leave-requests":
+        return <LeaveRequestsSection />;
+      case "users":
+        return <UsersSection />;
+      case "admin":
+        return <AdminSection />;
       default:
         return <OverviewSection />;
     }
