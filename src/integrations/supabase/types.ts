@@ -412,6 +412,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_groups: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
     }
     Enums: {
       job_status: "active" | "inactive" | "closed"
