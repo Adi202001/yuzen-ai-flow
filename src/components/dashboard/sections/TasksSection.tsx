@@ -202,7 +202,7 @@ export function TasksSection() {
     title: "",
     description: "",
     priority: "medium",
-    assignee_id: "",
+      assignee_id: "unassigned",
     due_date: "",
     tags: [] as string[]
   });
@@ -267,7 +267,7 @@ export function TasksSection() {
           title: formData.title.trim(),
           description: formData.description.trim() || null,
           priority: formData.priority,
-          assignee_id: formData.assignee_id || null,
+          assignee_id: formData.assignee_id === "unassigned" ? null : formData.assignee_id,
           due_date: formData.due_date || null,
           tags: formData.tags.length > 0 ? formData.tags : null,
           position: maxPosition + 1,
@@ -302,7 +302,7 @@ export function TasksSection() {
           title: formData.title.trim(),
           description: formData.description.trim() || null,
           priority: formData.priority,
-          assignee_id: formData.assignee_id || null,
+          assignee_id: formData.assignee_id === "unassigned" ? null : formData.assignee_id,
           due_date: formData.due_date || null,
           tags: formData.tags.length > 0 ? formData.tags : null
         })
@@ -408,7 +408,7 @@ export function TasksSection() {
       title: task.title,
       description: task.description || "",
       priority: task.priority,
-      assignee_id: task.assignee_id || "",
+      assignee_id: task.assignee_id || "unassigned",
       due_date: task.due_date ? task.due_date.split('T')[0] : "",
       tags: task.tags || []
     });
@@ -420,7 +420,7 @@ export function TasksSection() {
       title: "",
       description: "",
       priority: "medium",
-      assignee_id: "",
+      assignee_id: "unassigned",
       due_date: "",
       tags: []
     });
@@ -746,7 +746,7 @@ export function TasksSection() {
                     <SelectValue placeholder="Select assignee" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                     {profiles.map((profile) => (
                       <SelectItem key={profile.id} value={profile.user_id}>
                         {profile.name || 'Unnamed User'}
@@ -849,7 +849,7 @@ export function TasksSection() {
                     <SelectValue placeholder="Select assignee" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                     {profiles.map((profile) => (
                       <SelectItem key={profile.id} value={profile.user_id}>
                         {profile.name || 'Unnamed User'}
