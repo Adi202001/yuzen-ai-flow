@@ -58,6 +58,81 @@ export type Database = {
           },
         ]
       }
+      attendance: {
+        Row: {
+          check_in: string | null
+          check_out: string | null
+          created_at: string
+          date: string
+          id: string
+          location: string | null
+          notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      files: {
+        Row: {
+          category: string | null
+          created_at: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          name: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          name: string
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
       group_members: {
         Row: {
           group_id: string

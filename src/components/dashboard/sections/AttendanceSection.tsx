@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,64 +12,128 @@ import {
   MapPin,
   Smartphone
 } from "lucide-react";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 
-const attendanceData = [
-  {
-    id: 1,
-    name: "Sarah Wilson",
-    email: "sarah@company.com",
-    status: "present",
-    checkIn: "09:15 AM",
-    checkOut: null,
-    location: "Office"
-  },
-  {
-    id: 2,
-    name: "Mike Johnson", 
-    email: "mike@company.com",
-    status: "present",
-    checkIn: "08:45 AM",
-    checkOut: null,
-    location: "Remote"
-  },
-  {
-    id: 3,
-    name: "Alex Chen",
-    email: "alex@company.com", 
-    status: "present",
-    checkIn: "09:30 AM",
-    checkOut: null,
-    location: "Office"
-  },
-  {
-    id: 4,
-    name: "Emma Davis",
-    email: "emma@company.com",
-    status: "absent",
-    checkIn: null,
-    checkOut: null,
-    location: null
-  },
-  {
-    id: 5,
-    name: "John Smith",
-    email: "john@company.com",
-    status: "late", 
-    checkIn: "10:15 AM",
-    checkOut: null,
-    location: "Office"
-  }
-];
-
-const todayStats = {
-  present: 4,
-  absent: 1,
-  late: 1,
-  onTime: 3
-};
+interface AttendanceRecord {
+  id: string;
+  user_id: string;
+  check_in: string | null;
+  check_out: string | null;
+  status: string;
+  location: string | null;
+  date: string;
+  profiles: {
+    name: string | null;
+    user_id: string;
+  } | null;
+}
 
 export function AttendanceSection() {
   const [showQrCode, setShowQrCode] = useState(false);
+  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user, profile } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      fetchTodayAttendance();
+    }
+  }, [user]);
+
+  const fetchTodayAttendance = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data, error } = await supabase
+      .from('attendance')
+      .select(`
+        *,
+        profiles!attendance_user_id_fkey (name, user_id)
+      `)
+      .eq('date', today)
+      .order('check_in', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching attendance:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch attendance data",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAttendanceData(data || []);
+    setLoading(false);
+  };
+
+  const markAttendance = async () => {
+    if (!user) return;
+
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    // Check if already marked today
+    const { data: existing } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .single();
+
+    if (existing) {
+      toast({
+        title: "Already Marked",
+        description: "Attendance already marked for today",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const isLate = now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() > 0);
+
+    const { error } = await supabase
+      .from('attendance')
+      .insert({
+        user_id: user.id,
+        check_in: now.toISOString(),
+        status: isLate ? 'late' : 'present',
+        location: 'Office',
+        date: today
+      });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to mark attendance",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Attendance marked successfully",
+    });
+
+    fetchTodayAttendance();
+  };
+
+  const todayStats = {
+    present: attendanceData.filter(a => a.status === 'present').length,
+    absent: attendanceData.filter(a => a.status === 'absent').length,
+    late: attendanceData.filter(a => a.status === 'late').length,
+    onTime: attendanceData.filter(a => a.status === 'present' && a.check_in && new Date(a.check_in).getHours() <= 9).length
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -175,17 +239,17 @@ export function AttendanceSection() {
           <CardContent className="text-center py-8">
             <div className="inline-block p-8 bg-gradient-primary rounded-xl shadow-brand">
               <div className="w-48 h-48 bg-white rounded-lg flex items-center justify-center mx-auto mb-4">
-                <div className="text-6xl">📱</div>
+                <QrCode className="w-32 h-32 text-gray-600" />
               </div>
             </div>
-            <h3 className="text-xl font-semibold text-foreground mt-6 mb-2">Scan to Check In</h3>
+            <h3 className="text-xl font-semibold text-foreground mt-6 mb-2">Quick Check-In</h3>
             <p className="text-muted-foreground mb-4">
-              Use your mobile device to scan this QR code for quick attendance marking
+              Click the button below to mark your attendance for today
             </p>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Smartphone className="h-4 w-4" />
-              <span>Mobile app required for scanning</span>
-            </div>
+            <Button onClick={markAttendance} className="gap-2">
+              <Clock className="h-4 w-4" />
+              Mark Attendance
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -200,49 +264,49 @@ export function AttendanceSection() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {attendanceData.map((employee) => (
-              <div
-                key={employee.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-card-elevated hover:bg-secondary/50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
-                    {employee.name.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground">{employee.name}</h4>
-                    <p className="text-sm text-muted-foreground">{employee.email}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6">
-                  {employee.location && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{employee.location}</span>
+              {attendanceData.map((employee) => (
+                <div
+                  key={employee.id}
+                  className="flex items-center justify-between p-4 rounded-lg bg-card-elevated hover:bg-secondary/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
+                      {employee.profiles?.name?.split(" ").map(n => n[0]).join("") || 'U'}
                     </div>
-                  )}
-                  
-                  <div className="text-right">
-                    {employee.checkIn && (
-                      <p className="text-sm font-medium text-foreground">
-                        In: {employee.checkIn}
-                      </p>
-                    )}
-                    {employee.checkOut && (
-                      <p className="text-sm text-muted-foreground">
-                        Out: {employee.checkOut}
-                      </p>
-                    )}
+                    <div>
+                      <h4 className="font-medium text-foreground">{employee.profiles?.name || 'Unknown User'}</h4>
+                      <p className="text-sm text-muted-foreground">{employee.user_id}</p>
+                    </div>
                   </div>
 
-                  <Badge className={`${getStatusColor(employee.status)} flex items-center gap-1`}>
-                    {getStatusIcon(employee.status)}
-                    {employee.status.charAt(0).toUpperCase() + employee.status.slice(1)}
-                  </Badge>
+                  <div className="flex items-center gap-6">
+                    {employee.location && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>{employee.location}</span>
+                      </div>
+                    )}
+                    
+                    <div className="text-right">
+                      {employee.check_in && (
+                        <p className="text-sm font-medium text-foreground">
+                          In: {new Date(employee.check_in).toLocaleTimeString()}
+                        </p>
+                      )}
+                      {employee.check_out && (
+                        <p className="text-sm text-muted-foreground">
+                          Out: {new Date(employee.check_out).toLocaleTimeString()}
+                        </p>
+                      )}
+                    </div>
+
+                    <Badge className={`${getStatusColor(employee.status)} flex items-center gap-1`}>
+                      {getStatusIcon(employee.status)}
+                      {employee.status.charAt(0).toUpperCase() + employee.status.slice(1)}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </CardContent>
       </Card>

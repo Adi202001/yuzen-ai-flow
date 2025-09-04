@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,75 +24,192 @@ import {
   HardDrive,
   Cloud
 } from "lucide-react";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 
-const files = [
-  {
-    id: 1,
-    name: "Q4_Financial_Report.pdf",
-    type: "pdf",
-    size: "2.4 MB",
-    uploadedBy: "Sarah Wilson",
-    uploadedAt: "2024-01-10T10:30:00Z",
-    category: "Reports"
-  },
-  {
-    id: 2,
-    name: "Team_Meeting_Notes.docx", 
-    type: "document",
-    size: "156 KB",
-    uploadedBy: "Mike Johnson",
-    uploadedAt: "2024-01-09T15:45:00Z",
-    category: "Meeting Notes"
-  },
-  {
-    id: 3,
-    name: "Product_Mockups.fig",
-    type: "design",
-    size: "12.8 MB", 
-    uploadedBy: "Alex Chen",
-    uploadedAt: "2024-01-08T09:20:00Z",
-    category: "Design"
-  },
-  {
-    id: 4,
-    name: "Company_Logo.png",
-    type: "image",
-    size: "856 KB",
-    uploadedBy: "Emma Davis",
-    uploadedAt: "2024-01-07T14:15:00Z",
-    category: "Assets"
-  },
-  {
-    id: 5,
-    name: "Project_Proposal.pdf",
-    type: "pdf", 
-    size: "3.1 MB",
-    uploadedBy: "John Smith",
-    uploadedAt: "2024-01-06T11:00:00Z",
-    category: "Proposals"
-  },
-  {
-    id: 6,
-    name: "Training_Video.mp4",
-    type: "video",
-    size: "45.2 MB",
-    uploadedBy: "Sarah Wilson", 
-    uploadedAt: "2024-01-05T16:30:00Z",
-    category: "Training"
-  }
-];
-
-const storageStats = {
-  used: 12.5,
-  total: 15,
-  files: files.length
-};
+interface FileRecord {
+  id: string;
+  name: string;
+  file_path: string;
+  file_size: number;
+  file_type: string;
+  category: string | null;
+  uploaded_by: string;
+  created_at: string;
+  profiles: {
+    name: string | null;
+  } | null;
+}
 
 export function FilesSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [files, setFiles] = useState<FileRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      fetchFiles();
+    }
+  }, [user]);
+
+  const fetchFiles = async () => {
+    const { data, error } = await supabase
+      .from('files')
+      .select(`
+        *,
+        profiles!files_uploaded_by_fkey (name)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching files:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch files",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFiles(data || []);
+    setLoading(false);
+  };
+
+  const handleFileUpload = async () => {
+    if (!selectedFile || !user) return;
+
+    setUploadProgress(10);
+
+    const fileExt = selectedFile.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+    try {
+      // Upload file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('files')
+        .upload(fileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      setUploadProgress(70);
+
+      // Save file metadata to database
+      const { error: dbError } = await supabase
+        .from('files')
+        .insert({
+          name: selectedFile.name,
+          file_path: uploadData.path,
+          file_size: selectedFile.size,
+          file_type: selectedFile.type,
+          category: 'General',
+          uploaded_by: user.id
+        });
+
+      if (dbError) throw dbError;
+
+      setUploadProgress(100);
+
+      toast({
+        title: "Success",
+        description: "File uploaded successfully",
+      });
+
+      setShowUploadDialog(false);
+      setSelectedFile(null);
+      setUploadProgress(0);
+      fetchFiles();
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file",
+        variant: "destructive",
+      });
+      setUploadProgress(0);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const deleteFile = async (fileId: string, filePath: string) => {
+    // Delete from storage
+    const { error: storageError } = await supabase.storage
+      .from('files')
+      .remove([filePath]);
+
+    if (storageError) {
+      toast({
+        title: "Error",
+        description: "Failed to delete file from storage",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Delete from database
+    const { error: dbError } = await supabase
+      .from('files')
+      .delete()
+      .eq('id', fileId);
+
+    if (dbError) {
+      toast({
+        title: "Error",
+        description: "Failed to delete file record",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "File deleted successfully",
+    });
+
+    fetchFiles();
+  };
+
+  const downloadFile = async (filePath: string, fileName: string) => {
+    const { data, error } = await supabase.storage
+      .from('files')
+      .download(filePath);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const storageStats = {
+    used: files.reduce((total, file) => total + file.file_size, 0) / (1024 * 1024), // Convert to MB
+    total: 100, // 100MB limit for demo
+    files: files.length
+  };
 
   const getFileIcon = (type: string) => {
     switch (type) {
@@ -129,7 +246,23 @@ export function FilesSection() {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ["all", ...Array.from(new Set(files.map(f => f.category)))];
+  const categories = ["all", ...Array.from(new Set(files.map(f => f.category).filter(Boolean)))];
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -150,19 +283,32 @@ export function FilesSection() {
               <DialogHeader>
                 <DialogTitle>Upload Files</DialogTitle>
               </DialogHeader>
-              <div className="space-y-6 py-4">
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                  <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-medium text-foreground mb-2">
-                    Drag & Drop Files Here
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    or click to browse files
-                  </p>
-                  <Button variant="outline">
-                    Browse Files
-                  </Button>
-                </div>
+                <div className="space-y-6 py-4">
+                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                    <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-lg font-medium text-foreground mb-2">
+                      Select Files to Upload
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Choose files from your device
+                    </p>
+                    <Input
+                      type="file"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <Button variant="outline" asChild>
+                      <label htmlFor="file-upload" className="cursor-pointer">
+                        Browse Files
+                      </label>
+                    </Button>
+                    {selectedFile && (
+                      <p className="mt-2 text-sm text-foreground">
+                        Selected: {selectedFile.name}
+                      </p>
+                    )}
+                  </div>
                 
                 {uploadProgress > 0 && (
                   <div className="space-y-2">
@@ -174,14 +320,14 @@ export function FilesSection() {
                   </div>
                 )}
 
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={() => setShowUploadDialog(false)}>
-                    Upload
-                  </Button>
-                </div>
+                  <div className="flex justify-end gap-3">
+                    <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleFileUpload} disabled={!selectedFile || uploadProgress > 0}>
+                      {uploadProgress > 0 ? 'Uploading...' : 'Upload'}
+                    </Button>
+                  </div>
               </div>
             </DialogContent>
           </Dialog>
@@ -204,18 +350,18 @@ export function FilesSection() {
                 <div>
                   <p className="text-sm text-muted-foreground">Storage Used</p>
                   <p className="text-2xl font-bold text-foreground">
-                    {storageStats.used}GB
+                    {storageStats.used.toFixed(1)}MB
                   </p>
                 </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>of {storageStats.total}GB</span>
-                <span>{Math.round((storageStats.used / storageStats.total) * 100)}%</span>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>of {storageStats.total}MB</span>
+                  <span>{Math.round((storageStats.used / storageStats.total) * 100)}%</span>
+                </div>
+                <Progress value={(storageStats.used / storageStats.total) * 100} className="h-2" />
               </div>
-              <Progress value={(storageStats.used / storageStats.total) * 100} className="h-2" />
-            </div>
           </CardContent>
         </Card>
 
@@ -292,26 +438,36 @@ export function FilesSection() {
                       <h4 className="font-medium text-foreground truncate text-sm">
                         {file.name}
                       </h4>
-                      <p className="text-xs text-muted-foreground">{file.size}</p>
+                      <p className="text-xs text-muted-foreground">{formatFileSize(file.file_size)}</p>
                     </div>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => downloadFile(file.file_path, file.name)}
+                    >
                       <Download className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => deleteFile(file.id, file.file_path)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Badge className={getCategoryColor(file.category)} variant="outline">
-                    {file.category}
+                  <Badge className={getCategoryColor(file.category || 'General')} variant="outline">
+                    {file.category || 'General'}
                   </Badge>
                   <div className="text-xs text-muted-foreground">
-                    <p>Uploaded by {file.uploadedBy}</p>
-                    <p>{new Date(file.uploadedAt).toLocaleDateString()}</p>
+                    <p>Uploaded by {file.profiles?.name || 'Unknown'}</p>
+                    <p>{new Date(file.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>

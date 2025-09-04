@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -11,51 +12,147 @@ import {
   Target,
   Zap
 } from "lucide-react";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import yuzenHero from "@/assets/yuzen-hero.jpg";
 
-const stats = [
-  {
-    title: "Team Members",
-    value: "5",
-    change: "+2 this month",
-    icon: Users,
-    color: "text-blue-600",
-    bgColor: "bg-blue-50 dark:bg-blue-950"
-  },
-  {
-    title: "Active Tasks",
-    value: "23",
-    change: "+5 today",
-    icon: CheckSquare,
-    color: "text-green-600",
-    bgColor: "bg-green-50 dark:bg-green-950"
-  },
-  {
-    title: "Files Shared",
-    value: "128",
-    change: "+12 this week",
-    icon: FileText,
-    color: "text-purple-600",
-    bgColor: "bg-purple-50 dark:bg-purple-950"
-  },
-  {
-    title: "AI Interactions",
-    value: "89/150",
-    change: "61 remaining",
-    icon: Zap,
-    color: "text-orange-600",
-    bgColor: "bg-orange-50 dark:bg-orange-950"
-  },
-];
-
-const recentActivities = [
-  { user: "Sarah Wilson", action: "completed task", target: "Update user documentation", time: "2 minutes ago" },
-  { user: "Mike Johnson", action: "uploaded file", target: "Q4 Report.pdf", time: "15 minutes ago" },
-  { user: "Alex Chen", action: "checked in", target: "Morning attendance", time: "1 hour ago" },
-  { user: "Emma Davis", action: "created task", target: "Review client feedback", time: "2 hours ago" },
-];
-
 export function OverviewSection() {
+  const [stats, setStats] = useState([
+    {
+      title: "Team Members",
+      value: "0",
+      change: "Loading...",
+      icon: Users,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50 dark:bg-blue-950"
+    },
+    {
+      title: "Active Tasks",
+      value: "0",
+      change: "Loading...",
+      icon: CheckSquare,
+      color: "text-green-600",
+      bgColor: "bg-green-50 dark:bg-green-950"
+    },
+    {
+      title: "Files Shared",
+      value: "0",
+      change: "Loading...",
+      icon: FileText,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50 dark:bg-purple-950"
+    },
+    {
+      title: "Leave Requests",
+      value: "0",
+      change: "Pending review",
+      icon: Zap,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50 dark:bg-orange-950"
+    },
+  ]);
+
+  const [recentActivities, setRecentActivities] = useState([
+    { user: "Loading...", action: "", target: "", time: "" }
+  ]);
+
+  const { user, profile } = useAuth();
+
+  useEffect(() => {
+    if (user && (profile?.role === 'admin' || profile?.role === 'hr')) {
+      fetchDashboardStats();
+      fetchRecentActivities();
+    }
+  }, [user, profile]);
+
+  const fetchDashboardStats = async () => {
+    try {
+      // Fetch team members count
+      const { count: teamCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch active tasks count
+      const { count: tasksCount } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .neq('status', 'done');
+
+      // Fetch files count
+      const { count: filesCount } = await supabase
+        .from('files')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch pending leave requests
+      const { count: leaveCount } = await supabase
+        .from('leave_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      setStats([
+        {
+          title: "Team Members",
+          value: teamCount?.toString() || "0",
+          change: "Total registered",
+          icon: Users,
+          color: "text-blue-600",
+          bgColor: "bg-blue-50 dark:bg-blue-950"
+        },
+        {
+          title: "Active Tasks",
+          value: tasksCount?.toString() || "0",
+          change: "In progress",
+          icon: CheckSquare,
+          color: "text-green-600",
+          bgColor: "bg-green-50 dark:bg-green-950"
+        },
+        {
+          title: "Files Shared",
+          value: filesCount?.toString() || "0",
+          change: "Total uploaded",
+          icon: FileText,
+          color: "text-purple-600",
+          bgColor: "bg-purple-50 dark:bg-purple-950"
+        },
+        {
+          title: "Leave Requests",
+          value: leaveCount?.toString() || "0",
+          change: "Pending review",
+          icon: Zap,
+          color: "text-orange-600",
+          bgColor: "bg-orange-50 dark:bg-orange-950"
+        },
+      ]);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    }
+  };
+
+  const fetchRecentActivities = async () => {
+    try {
+      // Fetch recent tasks
+      const { data: recentTasks } = await supabase
+        .from('tasks')
+        .select(`
+          title,
+          created_at,
+          profiles!tasks_created_by_fkey (name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(4);
+
+      const activities = recentTasks?.map(task => ({
+        user: task.profiles?.name || 'Unknown User',
+        action: 'created task',
+        target: task.title,
+        time: new Date(task.created_at).toLocaleString()
+      })) || [];
+
+      setRecentActivities(activities);
+    } catch (error) {
+      console.error('Error fetching recent activities:', error);
+    }
+  };
   return (
     <div className="space-y-8">
       {/* Hero Section */}
