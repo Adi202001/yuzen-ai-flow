@@ -63,7 +63,7 @@ export function FilesSection() {
       .from('files')
       .select(`
         *,
-        profiles!files_uploaded_by_fkey (name)
+        profiles!files_uploaded_by_fkey(name)
       `)
       .order('created_at', { ascending: false });
 
@@ -433,7 +433,7 @@ export function FilesSection() {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3 flex-1">
-                    {getFileIcon(file.type)}
+                    {getFileIcon(file.file_type)}
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-foreground truncate text-sm">
                         {file.name}

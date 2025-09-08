@@ -49,7 +49,7 @@ export function AttendanceSection() {
       .from('attendance')
       .select(`
         *,
-        profiles!attendance_user_id_fkey (name, user_id)
+        profiles!attendance_user_id_fkey(name, user_id)
       `)
       .eq('date', today)
       .order('check_in', { ascending: true });

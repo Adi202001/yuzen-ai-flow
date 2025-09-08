@@ -8,6 +8,8 @@ import { FilesSection } from "./sections/FilesSection";
 import { MessagesSection } from "./sections/MessagesSection";
 import { LeaveRequestsSection } from "./sections/LeaveRequestsSection";
 import { UsersSection } from "./sections/UsersSection";
+import { ProjectsSection } from "./sections/ProjectsSection";
+import { TeamsSection } from "./sections/TeamsSection";
 import { AdminSection } from "./sections/AdminSection";
 
 export function Dashboard() {
@@ -19,6 +21,10 @@ export function Dashboard() {
         return <OverviewSection />;
       case "attendance":
         return <AttendanceSection />;
+      case "projects":
+        return <ProjectsSection />;
+      case "teams":
+        return <TeamsSection />;
       case "tasks":
         return <TasksSection />;
       case "personal-todos":

@@ -37,6 +37,8 @@ const getNavigationItems = (userRole: string) => {
   const baseItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "attendance", label: "Attendance", icon: Calendar },
+    { id: "projects", label: "Projects", icon: CheckSquare },
+    { id: "teams", label: "Teams", icon: Users },
     { id: "tasks", label: "Tasks", icon: CheckSquare },
     { id: "personal-todos", label: "Personal Todos", icon: ClipboardList },
     { id: "files", label: "Files", icon: FileText },
