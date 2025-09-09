@@ -71,12 +71,8 @@ export function OrganizationDashboard() {
 
     if (orgError) {
       console.error('Error fetching organization:', orgError);
-      toast({
-        title: "Error",
-        description: "Organization not found or access denied",
-        variant: "destructive",
-      });
-      setLoading(false);
+      // Redirect to main domain for onboarding if organization not found
+      window.location.href = 'https://yuzen.ainrion.com/onboarding';
       return;
     }
 
