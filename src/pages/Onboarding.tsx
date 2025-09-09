@@ -88,7 +88,10 @@ export function Onboarding() {
       });
 
       // Redirect to the organization subdomain
-      const newUrl = `https://${formData.slug}.yuzen.ainrion.com`;
+      const currentDomain = window.location.hostname.includes('lovable') 
+        ? window.location.hostname 
+        : 'yuzen.ainrion.com';
+      const newUrl = `${window.location.protocol}//${formData.slug}.${currentDomain}`;
       window.location.href = newUrl;
 
     } catch (error) {

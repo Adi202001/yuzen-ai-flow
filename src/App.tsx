@@ -68,7 +68,8 @@ function AppRoutes() {
   const isSubdomain = hostname !== 'yuzen.ainrion.com' && 
                      hostname !== 'localhost' && 
                      !hostname.startsWith('127.0.0.1') &&
-                     hostname !== '404fa0df-8c2c-4dde-836f-92b4e9bde035.lovable.app';
+                     !hostname.includes('lovable.app') &&
+                     hostname.includes('.');
   
   if (isSubdomain) {
     // Extract subdomain slug
