@@ -87,12 +87,8 @@ export function Onboarding() {
         description: `Welcome to ${formData.name}! Redirecting to your dashboard...`,
       });
 
-      // Redirect to the organization subdomain
-      const currentDomain = window.location.hostname.includes('lovable') 
-        ? window.location.hostname 
-        : 'yuzen.ainrion.com';
-      const newUrl = `${window.location.protocol}//${formData.slug}.${currentDomain}`;
-      window.location.href = newUrl;
+      // Redirect to the organization dashboard
+      window.location.href = `/dashboard/${formData.slug}`;
 
     } catch (error) {
       console.error('Error creating organization:', error);
@@ -132,21 +128,16 @@ export function Onboarding() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="slug">Subdomain Slug</Label>
-              <div className="flex">
-                <Input
-                  id="slug"
-                  placeholder="my-company"
-                  value={formData.slug}
-                  onChange={(e) => handleInputChange('slug', e.target.value)}
-                  required
-                />
-                <span className="flex items-center px-3 text-sm text-muted-foreground bg-muted border border-l-0 rounded-r-md">
-                  .yuzen.ainrion.com
-                </span>
-              </div>
+              <Label htmlFor="slug">Organization Identifier</Label>
+              <Input
+                id="slug"
+                placeholder="my-company"
+                value={formData.slug}
+                onChange={(e) => handleInputChange('slug', e.target.value)}
+                required
+              />
               <p className="text-xs text-muted-foreground">
-                This will be your organization's unique URL
+                This will be your organization's unique identifier
               </p>
             </div>
 

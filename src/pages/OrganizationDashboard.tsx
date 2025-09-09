@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -40,23 +41,51 @@ interface Usage {
 }
 
 export function OrganizationDashboard() {
-  // Extract slug from subdomain instead of URL params
-  const hostname = window.location.hostname;
-  const slug = hostname.split('.')[0];
-  
-  // Skip if we're on the main domain (not a subdomain)
-  const parts = hostname.split('.');
-  const isMainDomain = parts.length <= 2 || hostname === '404fa0df-8c2c-4dde-836f-92b4e9bde035.sandbox.lovable.dev';
-  if (isMainDomain) {
-    window.location.href = window.location.origin + '/onboarding';
-    return null;
-  }
+  const { slug } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
   
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [usage, setUsage] = useState<Usage | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // If no slug is provided, fetch user's first organization
+  const [userOrganizations, setUserOrganizations] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchUserOrganizations = async () => {
+      if (!user) return;
+      
+      try {
+        // Get organizations where user is owner or member
+        const { data: ownedOrgs } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('owner_id', user.id);
+
+        const { data: memberOrgs } = await supabase
+          .from('organization_members')
+          .select('organization_id, organizations(*)')
+          .eq('user_id', user.id);
+
+        const allOrgs = [
+          ...(ownedOrgs || []),
+          ...(memberOrgs?.map(m => m.organizations) || [])
+        ].filter(org => org);
+
+        setUserOrganizations(allOrgs);
+        
+        // If no slug provided but user has organizations, use the first one
+        if (!slug && allOrgs.length > 0) {
+          window.location.href = `/dashboard/${allOrgs[0].slug}`;
+        }
+      } catch (error) {
+        console.error('Error fetching user organizations:', error);
+      }
+    };
+
+    fetchUserOrganizations();
+  }, [user, slug]);
 
   useEffect(() => {
     console.log('Organization Dashboard - slug:', slug, 'user:', user);
@@ -79,11 +108,8 @@ export function OrganizationDashboard() {
 
     if (orgError) {
       console.error('Error fetching organization:', orgError);
-      // Redirect to main domain for onboarding if organization not found
-      const mainDomain = window.location.hostname.includes('lovable') 
-        ? window.location.origin
-        : 'https://yuzen.ainrion.com';
-      window.location.href = `${mainDomain}/onboarding`;
+      // Redirect to onboarding if organization not found
+      window.location.href = '/onboarding';
       return;
     }
 

@@ -63,43 +63,21 @@ function AppRoutes() {
     );
   }
 
-  // Check if we're on a subdomain
-  const hostname = window.location.hostname;
-  const isSubdomain = hostname !== 'yuzen.ainrion.com' && 
-                     hostname !== 'localhost' && 
-                     !hostname.startsWith('127.0.0.1') &&
-                     !hostname.includes('lovable.app') &&
-                     hostname.includes('.');
-  
-  if (isSubdomain) {
-    // Extract subdomain slug
-    const slug = hostname.split('.')[0];
-    
-    return (
-      <Routes>
-        <Route path="/" element={
-          user ? <OrganizationDashboard /> : <Navigate to="/auth" replace />
-        } />
-        <Route path="/auth" element={
-          user ? <Navigate to="/" replace /> : <Auth />
-        } />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    );
-  }
-
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/auth" element={
         user ? (
-          hasOrganizations ? <Navigate to="/" replace /> : <Navigate to="/onboarding" replace />
+          hasOrganizations ? <Navigate to="/dashboard" replace /> : <Navigate to="/onboarding" replace />
         ) : <Auth />
       } />
       <Route path="/onboarding" element={
         user ? (
-          hasOrganizations === false ? <Onboarding /> : <Navigate to="/" replace />
+          hasOrganizations === false ? <Onboarding /> : <Navigate to="/dashboard" replace />
         ) : <Navigate to="/auth" replace />
+      } />
+      <Route path="/dashboard/:slug?" element={
+        user ? <OrganizationDashboard /> : <Navigate to="/auth" replace />
       } />
       <Route path="*" element={<NotFound />} />
     </Routes>
