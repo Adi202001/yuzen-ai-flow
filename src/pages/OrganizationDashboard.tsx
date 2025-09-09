@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,9 @@ interface Usage {
 }
 
 export function OrganizationDashboard() {
-  const { slug } = useParams();
+  // Extract slug from subdomain instead of URL params
+  const hostname = window.location.hostname;
+  const slug = hostname.split('.')[0];
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -50,6 +51,7 @@ export function OrganizationDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Organization Dashboard - slug:', slug, 'user:', user);
     if (user && slug) {
       fetchOrganizationData();
     }
