@@ -76,7 +76,7 @@ export function ProjectsSection() {
       .select(`
         *,
         teams(name, id),
-        profiles!projects_created_by_fkey(name)
+        profiles!created_by(name)
       `)
       .order('created_at', { ascending: false });
 
