@@ -293,7 +293,10 @@ export function MessagesSection() {
         
         <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
           <DialogTrigger asChild>
-            <Button>
+            <Button 
+              className="transition-all duration-300 hover:shadow-lg hover:scale-105"
+              variant="hero"
+            >
               <Plus className="w-4 h-4 mr-2" />
               New Conversation
             </Button>
@@ -364,9 +367,9 @@ export function MessagesSection() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)] animate-fade-in">
         {/* Conversations List */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 shadow-elegant hover:shadow-brand transition-shadow duration-300">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5" />
@@ -382,23 +385,40 @@ export function MessagesSection() {
                 return (
                   <div
                     key={conversation.id}
-                    className={`p-3 cursor-pointer hover:bg-secondary transition-colors ${
-                      isActive ? 'bg-secondary' : ''
+                    className={`p-3 cursor-pointer hover:bg-secondary/80 transition-all duration-200 rounded-lg mx-2 my-1 ${
+                      isActive ? 'bg-secondary shadow-inner' : 'hover:shadow-sm'
                     }`}
                     onClick={() => {
                       setSelectedConversation(conversation.id);
                       setConversationType(conversation.type);
                     }}
                   >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>
-                          <Icon className="w-4 h-4" />
-                        </AvatarFallback>
-                      </Avatar>
+                    <div className="flex items-center gap-3 group">
+                      <div className="relative">
+                        <Avatar className="h-10 w-10 group-hover:scale-110 transition-transform duration-200">
+                          <AvatarFallback className={isActive ? 'bg-primary/10' : 'bg-secondary'}> 
+                            <Icon className={`h-4 w-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                          </AvatarFallback>
+                        </Avatar>
+                        {conversation.unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-white text-xs flex items-center justify-center">
+                            {conversation.unreadCount}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{conversation.name}</p>
-                        <Badge variant="secondary" className="text-xs">
+                        <div className="flex items-center justify-between">
+                          <p className={`font-medium truncate ${isActive ? 'text-primary' : 'text-foreground'} group-hover:text-primary transition-colors`}>
+                            {conversation.name}
+                          </p>
+                          <span className="text-xs text-muted-foreground">
+                            {conversation.lastMessageTime}
+                          </span>
+                        </div>
+                        <Badge 
+                          variant={isActive ? 'default' : 'secondary'} 
+                          className={`text-xs ${isActive ? 'bg-primary/20 text-primary' : ''} group-hover:bg-primary/10 group-hover:text-primary transition-colors`}
+                        >
                           {conversation.type}
                         </Badge>
                       </div>
@@ -411,7 +431,7 @@ export function MessagesSection() {
         </Card>
 
         {/* Messages Area */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 shadow-elegant hover:shadow-brand transition-shadow duration-300">
           <CardHeader>
             <CardTitle>
               {selectedConversation ? (
@@ -432,10 +452,10 @@ export function MessagesSection() {
                         className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-xs lg:max-w-md p-3 rounded-lg ${
+                          className={`max-w-xs lg:max-w-md p-3 rounded-lg transition-all duration-200 ${
                             message.sender_id === user?.id
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary'
+                              ? 'bg-primary text-primary-foreground hover:shadow-lg hover:-translate-y-0.5'
+                              : 'bg-secondary hover:shadow-sm hover:bg-secondary/80'
                           }`}
                         >
                           {message.sender_id !== user?.id && (
@@ -467,8 +487,14 @@ export function MessagesSection() {
                           sendMessage();
                         }
                       }}
+                      className="border-primary/20 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
                     />
-                    <Button onClick={sendMessage} size="icon">
+                    <Button 
+                      onClick={sendMessage} 
+                      size="icon" 
+                      className="transition-all duration-200 hover:scale-105 hover:shadow-md"
+                      disabled={!newMessage.trim()}
+                    >
                       <Send className="w-4 h-4" />
                     </Button>
                   </div>
