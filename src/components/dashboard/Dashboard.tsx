@@ -13,6 +13,7 @@ import { TeamsSection } from "./sections/TeamsSection";
 import { AdminSection } from "./sections/AdminSection";
 import { ProfileSection } from "./sections/ProfileSection";
 import { SettingsSection } from "./sections/SettingsSection";
+import { CalendarView } from "@/components/calendar/CalendarView";
 
 export function Dashboard() {
   const [activeSection, setActiveSection] = useState("overview");
@@ -23,6 +24,8 @@ export function Dashboard() {
         return <OverviewSection onSectionChange={setActiveSection} />;
       case "attendance":
         return <AttendanceSection />;
+      case "calendar":
+        return <CalendarView />;
       case "projects":
         return <ProjectsSection />;
       case "teams":

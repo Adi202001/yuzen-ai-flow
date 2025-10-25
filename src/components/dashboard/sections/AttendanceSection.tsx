@@ -18,7 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { AttendanceHistory } from '@/components/attendance/AttendanceHistory';
 import { BreakTracking } from '@/components/attendance/BreakTracking';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   getCurrentLocation,
   isWithinOfficeRadius,
@@ -435,7 +435,7 @@ export function AttendanceSection() {
             <CardContent className="text-center py-8">
               <div className="inline-block p-8 bg-gradient-primary rounded-xl shadow-brand">
                 {qrCodeData && (
-                  <QRCode value={qrCodeData} size={200} level="H" />
+                  <QRCodeSVG value={qrCodeData} size={200} level="H" />
                 )}
               </div>
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-2">
