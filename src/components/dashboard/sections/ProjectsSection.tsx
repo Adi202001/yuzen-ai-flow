@@ -74,6 +74,7 @@ export function ProjectsSection() {
     
     setLoading(true);
     
+ feat/dashboard-ui-updates
     try {
       // First, check if the projects table exists
       const { data: tableExists } = await supabase
@@ -103,6 +104,18 @@ export function ProjectsSection() {
 
       setProjects(data || []);
     } catch (error) {
+
+    const { data, error } = await supabase
+      .from('projects')
+      .select(`
+        *,
+        teams(name, id),
+        profiles!created_by(name)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+ main
       console.error('Error fetching projects:', error);
       toast({
         title: "Error",
