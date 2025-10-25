@@ -14,7 +14,9 @@
       "Bash(cat:*)",
       "Bash(del \"c:\\Users\\Adity\\Downloads\\yuzen-ai-flow-main\\yuzen-ai-flow-main\\src\\integrations\\supabase\\types.ts\")",
       "Bash(git reset:*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(npm install:*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []
