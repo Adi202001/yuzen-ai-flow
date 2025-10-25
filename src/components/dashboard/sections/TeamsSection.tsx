@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Users, UserPlus, Search, Crown, User, MoreVertical } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +58,7 @@ interface Profile {
 }
 
 export function TeamsSection() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
   // Mock data for teams
@@ -112,16 +113,39 @@ export function TeamsSection() {
     }
   ];
 
-  // Mock profiles
-  const mockProfiles: Profile[] = [
-    { user_id: "1", name: "John Doe" },
-    { user_id: "2", name: "Jane Smith" },
-    { user_id: "3", name: "Bob Johnson" },
-    { user_id: "4", name: "Alice Williams" }
-  ];
-
   const [teams, setTeams] = useState<Team[]>(mockTeams);
-  const [profiles, setProfiles] = useState<Profile[]>(mockProfiles);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+
+  // Fetch all users from the database
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_id, name')
+          .order('name');
+
+        if (error) {
+          console.error('Error fetching profiles:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load users from database.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data) {
+          setProfiles(data);
+        }
+      } catch (error) {
+        console.error('Error fetching profiles:', error);
+      }
+    };
+
+    fetchProfiles();
+  }, []);
+
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -357,11 +381,16 @@ export function TeamsSection() {
                       <SelectValue placeholder="Choose a user" />
                     </SelectTrigger>
                     <SelectContent>
-                      {profiles.map((profile) => (
-                        <SelectItem key={profile.user_id} value={profile.user_id}>
-                          {profile.name}
-                        </SelectItem>
-                      ))}
+                      {profiles
+                        .filter((profile) => {
+                          const team = teams.find(t => t.id === selectedTeam);
+                          return !team?.team_members?.some(m => m.user_id === profile.user_id);
+                        })
+                        .map((profile) => (
+                          <SelectItem key={profile.user_id} value={profile.user_id}>
+                            {profile.name}{profile.user_id === user?.id ? ' (You)' : ''}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -606,11 +635,15 @@ export function TeamsSection() {
                     <SelectValue placeholder="Select user" />
                   </SelectTrigger>
                   <SelectContent>
-                    {profiles.map((profile) => (
-                      <SelectItem key={profile.user_id} value={profile.user_id}>
-                        {profile.name}
-                      </SelectItem>
-                    ))}
+                    {profiles
+                      .filter((profile) => {
+                        return !teamToEditOrDelete?.team_members?.some(m => m.user_id === profile.user_id);
+                      })
+                      .map((profile) => (
+                        <SelectItem key={profile.user_id} value={profile.user_id}>
+                          {profile.name}{profile.user_id === user?.id ? ' (You)' : ''}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
                 <Select
