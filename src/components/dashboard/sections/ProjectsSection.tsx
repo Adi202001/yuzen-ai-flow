@@ -149,7 +149,14 @@ export function ProjectsSection() {
   };
 
   const createProject = async () => {
-    if (!user || !newProject.name.trim()) return;
+    if (!user || !newProject.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Project name is required",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const projectData = {
@@ -163,17 +170,17 @@ export function ProjectsSection() {
       };
 
       console.log('Creating project with data:', projectData);
+      console.log('User ID:', user.id);
 
       const { data, error } = await supabase
         .from('projects')
         .insert([projectData])
-        .select(`
-          *,
-          teams(name, id),
-          profiles!created_by(name)
-        `);
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       console.log('Project created successfully:', data);
 
@@ -196,11 +203,15 @@ export function ProjectsSection() {
         team_id: "",
         due_date: "",
       });
-    } catch (error) {
+
+      // Refresh the projects list
+      fetchProjects();
+    } catch (error: any) {
       console.error('Error creating project:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create project",
+        description: error?.message || error?.error_description || "Failed to create project",
         variant: "destructive",
       });
     }
