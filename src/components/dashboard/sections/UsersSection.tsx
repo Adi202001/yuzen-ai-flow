@@ -194,7 +194,7 @@ export function UsersSection() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -206,7 +206,7 @@ export function UsersSection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -215,12 +215,12 @@ export function UsersSection() {
                   {users.filter(u => u.role === 'admin').length}
                 </p>
               </div>
-              <Users className="h-8 w-8 text-destructive" />
+              <Users className="h-8 w-8 text-destructive transition-transform duration-300 group-hover:scale-110" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -234,7 +234,7 @@ export function UsersSection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -243,7 +243,7 @@ export function UsersSection() {
                   {users.filter(u => u.role === 'employee').length}
                 </p>
               </div>
-              <Users className="h-8 w-8 text-secondary" />
+              <Users className="h-8 w-8 text-secondary transition-transform duration-300 group-hover:scale-110" />
             </div>
           </CardContent>
         </Card>
@@ -260,12 +260,12 @@ export function UsersSection() {
         <CardContent>
           <div className="mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 transition-colors duration-200 group-focus-within:text-primary" />
               <Input
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-muted-foreground/20 hover:border-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
               />
             </div>
           </div>
@@ -279,12 +279,12 @@ export function UsersSection() {
               {filteredUsers.map(userProfile => (
                 <div
                   key={userProfile.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md hover:border-primary/30 transition-all duration-300 group hover:-translate-y-0.5"
                 >
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-12 w-12 group-hover:ring-2 group-hover:ring-primary/30 transition-all duration-300">
                       <AvatarImage src="" />
-                      <AvatarFallback className="bg-gradient-primary text-primary-foreground">
+                      <AvatarFallback className="bg-gradient-primary text-primary-foreground group-hover:scale-110 transition-transform duration-300">
                         {userProfile.name?.split(' ').map(n => n[0]).join('') || 'U'}
                       </AvatarFallback>
                     </Avatar>
@@ -306,6 +306,7 @@ export function UsersSection() {
                       <Button
                         size="sm"
                         variant="outline"
+                        className="transition-all duration-200 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
                         onClick={() => {
                           setSelectedUser(userProfile);
                           setNewRole(userProfile.role);
@@ -320,7 +321,7 @@ export function UsersSection() {
                           size="sm"
                           variant="outline"
                           onClick={() => deleteUser(userProfile.user_id)}
-                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          className="text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all duration-200"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -336,7 +337,7 @@ export function UsersSection() {
 
       {/* Edit User Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Edit User Role</DialogTitle>
           </DialogHeader>
@@ -364,7 +365,11 @@ export function UsersSection() {
                   </Select>
                 </div>
 
-                <Button onClick={updateUserRole} className="w-full">
+                <Button 
+                  onClick={updateUserRole} 
+                  className="w-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+                  variant="hero"
+                >
                   Update Role
                 </Button>
               </>

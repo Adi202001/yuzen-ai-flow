@@ -10,13 +10,20 @@ import {
   Clock,
   Calendar,
   Target,
-  Zap
+  Zap,
+  User,
+  ArrowRight
 } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import yuzenHero from "@/assets/yuzen-hero.jpg";
 
-export function OverviewSection() {
+interface OverviewSectionProps {
+  onSectionChange: (section: string) => void;
+}
+
+export function OverviewSection({ onSectionChange }: OverviewSectionProps) {
+  const { user, profile } = useAuth();
   const [stats, setStats] = useState([
     {
       title: "Team Members",
@@ -35,7 +42,7 @@ export function OverviewSection() {
       bgColor: "bg-green-50 dark:bg-green-950"
     },
     {
-      title: "Files Shared",
+      title: "Projects",
       value: "0",
       change: "Loading...",
       icon: FileText,
@@ -43,20 +50,18 @@ export function OverviewSection() {
       bgColor: "bg-purple-50 dark:bg-purple-950"
     },
     {
-      title: "Leave Requests",
+      title: "Upcoming Deadlines",
       value: "0",
-      change: "Pending review",
-      icon: Zap,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50 dark:bg-orange-950"
+      change: "Loading...",
+      icon: Calendar,
+      color: "text-amber-600",
+      bgColor: "bg-amber-50 dark:bg-amber-950"
     },
   ]);
 
   const [recentActivities, setRecentActivities] = useState([
     { user: "Loading...", action: "", target: "", time: "" }
   ]);
-
-  const { user, profile } = useAuth();
 
   useEffect(() => {
     if (user && (profile?.role === 'admin' || profile?.role === 'hr')) {
@@ -165,17 +170,28 @@ export function OverviewSection() {
           />
         </div>
         <div className="relative p-8 text-primary-foreground">
-          <h1 className="text-4xl font-bold mb-4">Welcome to Yuzen AI</h1>
+          <h1 className="text-4xl font-bold mb-2">Welcome back, {profile?.name?.split(' ')[0] || 'there'}!</h1>
           <p className="text-xl opacity-90 mb-6 max-w-2xl">
             Streamline your business operations with our AI-first management platform. 
             Attendance, tasks, files, and intelligent assistance - all in one place.
           </p>
+          <div className="flex items-center gap-2 text-sm text-primary-foreground/80 mb-6">
+            <User className="h-4 w-4" />
+            <span>View and edit your </span>
+            <button 
+              onClick={() => onSectionChange('profile')}
+              className="font-medium hover:underline flex items-center"
+            >
+              profile information
+              <ArrowRight className="ml-1 h-3 w-3" />
+            </button>
+          </div>
           <div className="flex flex-wrap gap-4">
             <Button variant="hero" size="lg">
               <Target className="mr-2 h-5 w-5" />
               Quick Setup
             </Button>
-            <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/20">
+            <Button variant="outline" size="lg" className="border-white/30 text-foreground hover:bg-white/20 dark:text-white">
               <TrendingUp className="mr-2 h-5 w-5" />
               View Analytics
             </Button>
@@ -276,19 +292,35 @@ export function OverviewSection() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-16 flex-col gap-2">
+            <Button 
+              variant="outline" 
+              className="h-16 flex-col gap-2 hover:bg-primary/10 transition-colors"
+              onClick={() => onSectionChange('attendance')}
+            >
               <Users className="h-6 w-6" />
               <span>Check Attendance</span>
             </Button>
-            <Button variant="outline" className="h-16 flex-col gap-2">
+            <Button 
+              variant="outline" 
+              className="h-16 flex-col gap-2 hover:bg-primary/10 transition-colors"
+              onClick={() => onSectionChange('tasks')}
+            >
               <CheckSquare className="h-6 w-6" />
               <span>Create Task</span>
             </Button>
-            <Button variant="outline" className="h-16 flex-col gap-2">
+            <Button 
+              variant="outline" 
+              className="h-16 flex-col gap-2 hover:bg-primary/10 transition-colors"
+              onClick={() => onSectionChange('files')}
+            >
               <FileText className="h-6 w-6" />
               <span>Upload File</span>
             </Button>
-            <Button variant="outline" className="h-16 flex-col gap-2">
+            <Button 
+              variant="outline" 
+              className="h-16 flex-col gap-2 hover:bg-primary/10 transition-colors"
+              onClick={() => onSectionChange('messages')}
+            >
               <Calendar className="h-6 w-6" />
               <span>Schedule Meeting</span>
             </Button>

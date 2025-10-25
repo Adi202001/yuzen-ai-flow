@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Toggle } from "@/components/ui/toggle";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,9 @@ import {
   CheckCircle2,
   Clock,
   Edit3,
-  Trash2
+  Trash2,
+  List,
+  LayoutGrid
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +46,7 @@ export function PersonalTodosSection() {
   const [editingTodo, setEditingTodo] = useState<PersonalTodo | null>(null);
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [newTodoContent, setNewTodoContent] = useState("");
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
 
   useEffect(() => {
     if (user) {
@@ -189,42 +193,69 @@ export function PersonalTodosSection() {
     );
   }
 
-
-
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div>
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold text-foreground mb-2">Notes</h1>
-          <p className="text-muted-foreground text-sm">{filteredTodos.length} notes</p>
+          <p className="text-muted-foreground text-sm">{filteredTodos.length} {filteredTodos.length === 1 ? 'note' : 'notes'}</p>
         </div>
-        <Button
-          onClick={() => setShowCreateDialog(true)}
-          className="bg-warning hover:bg-warning/90 text-warning-foreground rounded-full px-6 py-2 text-sm font-medium"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Note
-        </Button>
+        
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-muted p-1 rounded-full border border-border/50 h-10">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 px-3 rounded-md text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-background shadow-sm' : 'text-muted-foreground hover:bg-background/50'}`}
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4 mr-2" />
+                List
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 px-3 rounded-md text-sm font-medium transition-colors ${viewMode === 'board' ? 'bg-background shadow-sm' : 'text-muted-foreground hover:bg-background/50'}`}
+                onClick={() => setViewMode('board')}
+              >
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                Board
+              </Button>
+            </div>
+          
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            className="bg-warning hover:bg-warning/90 text-warning-foreground rounded-full px-6 h-10 text-sm font-medium"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Note
+          </Button>
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      {/* Search Bar */}
+      <div className="relative mb-6 max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
+          type="text"
           placeholder="Search notes..."
+          className="w-full pl-10 border border-border focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 border-0 bg-background/50 rounded-lg text-sm"
         />
       </div>
 
-      {/* Notes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Notes Container */}
+      <div className={viewMode === 'board' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3 border rounded-lg p-2'}>
         {filteredTodos.map((todo) => (
           <div
             key={todo.id}
-            className="bg-background rounded-lg p-4 border border-border/50 hover:border-border transition-colors cursor-pointer group"
+            className={`${
+              viewMode === 'board' 
+                ? 'bg-background rounded-lg p-4 border border-border/50 hover:border-border' 
+                : 'bg-background rounded-md p-4 border border-border/50 hover:border-border hover:shadow-sm'
+            } transition-all duration-200 cursor-pointer group`}
             onClick={() => toggleTodoComplete(todo)}
           >
             <div className="flex items-start gap-3 mb-3">

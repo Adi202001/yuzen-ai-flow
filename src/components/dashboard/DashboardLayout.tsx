@@ -64,9 +64,9 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
   const navigationItems = getNavigationItems(profile?.role || 'employee');
 
   return (
-    <div className="min-h-screen bg-gradient-surface">
+    <div className="min-h-screen bg-background">
       {/* Top Navigation */}
-      <header className="h-16 bg-card border-b border-border backdrop-blur-xl bg-card/80 sticky top-0 z-50">
+      <header className="h-16 border-b border-border backdrop-blur-xl bg-card/80 sticky top-0 z-50">
         <div className="flex items-center justify-between h-full px-6">
           <div className="flex items-center gap-4">
             <Button
@@ -115,11 +115,17 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem 
+                  className="cursor-pointer"
+                  onClick={() => onSectionChange('profile')}
+                >
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem 
+                  className="cursor-pointer"
+                  onClick={() => onSectionChange('settings')}
+                >
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
@@ -139,28 +145,55 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
         <aside className={`bg-card border-r border-border transition-all duration-300 ${
           sidebarCollapsed ? "w-16" : "w-64"
         } sticky top-16 h-[calc(100vh-4rem)]`}>
-          <nav className="p-4 space-y-2">
-            {navigationItems.map((item) => {
-              const isActive = activeSection === item.id;
-              const Icon = item.icon;
+          <div className="flex flex-col h-full">
+            <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
+              {navigationItems.map((item) => {
+                const isActive = activeSection === item.id;
+                const Icon = item.icon;
+                
+                return (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? "default" : "ghost"}
+                    className={`w-full justify-start gap-3 ${
+                      sidebarCollapsed ? "px-3" : "px-4"
+                    } ${isActive ? "bg-gradient-primary shadow-brand" : "hover:bg-secondary"}`}
+                    onClick={() => onSectionChange(item.id)}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {!sidebarCollapsed && (
+                      <span className="font-medium">{item.label}</span>
+                    )}
+                  </Button>
+                );
+              })}
+            </nav>
+            
+            {/* Bottom section with divider, settings, and logout */}
+            <div className="border-t border-border pt-2 pb-4 px-4 space-y-2">
+              <Button
+                variant="ghost"
+                className={`w-full justify-start gap-3 ${
+                  sidebarCollapsed ? "px-3" : "px-4"
+                } hover:bg-secondary`}
+                onClick={() => onSectionChange('settings')}
+              >
+                <Settings className="h-5 w-5" />
+                {!sidebarCollapsed && <span>Settings</span>}
+              </Button>
               
-              return (
-                <Button
-                  key={item.id}
-                  variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start gap-3 ${
-                    sidebarCollapsed ? "px-3" : "px-4"
-                  } ${isActive ? "bg-gradient-primary shadow-brand" : "hover:bg-secondary"}`}
-                  onClick={() => onSectionChange(item.id)}
-                >
-                  <Icon className="h-5 w-5" />
-                  {!sidebarCollapsed && (
-                    <span className="font-medium">{item.label}</span>
-                  )}
-                </Button>
-              );
-            })}
-          </nav>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start gap-3 text-destructive hover:bg-destructive/10 ${
+                  sidebarCollapsed ? "px-3" : "px-4"
+                }`}
+                onClick={signOut}
+              >
+                <LogOut className="h-5 w-5" />
+                {!sidebarCollapsed && <span>Logout</span>}
+              </Button>
+            </div>
+          </div>
         </aside>
 
         {/* Main Content */}

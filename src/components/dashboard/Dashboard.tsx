@@ -11,6 +11,8 @@ import { UsersSection } from "./sections/UsersSection";
 import { ProjectsSection } from "./sections/ProjectsSection";
 import { TeamsSection } from "./sections/TeamsSection";
 import { AdminSection } from "./sections/AdminSection";
+import { ProfileSection } from "./sections/ProfileSection";
+import { SettingsSection } from "./sections/SettingsSection";
 
 export function Dashboard() {
   const [activeSection, setActiveSection] = useState("overview");
@@ -18,7 +20,7 @@ export function Dashboard() {
   const renderSection = () => {
     switch (activeSection) {
       case "overview":
-        return <OverviewSection />;
+        return <OverviewSection onSectionChange={setActiveSection} />;
       case "attendance":
         return <AttendanceSection />;
       case "projects":
@@ -39,8 +41,12 @@ export function Dashboard() {
         return <UsersSection />;
       case "admin":
         return <AdminSection />;
+      case "profile":
+        return <ProfileSection />;
+      case "settings":
+        return <SettingsSection />;
       default:
-        return <OverviewSection />;
+        return <OverviewSection onSectionChange={setActiveSection} />;
     }
   };
 

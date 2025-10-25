@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 interface Project {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   status: string;
   priority: string;
   team_id: string | null;
@@ -36,7 +36,10 @@ interface Project {
 interface Team {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export function ProjectsSection() {
@@ -71,6 +74,37 @@ export function ProjectsSection() {
     
     setLoading(true);
     
+ feat/dashboard-ui-updates
+    try {
+      // First, check if the projects table exists
+      const { data: tableExists } = await supabase
+        .from('pg_tables')
+        .select('tablename')
+        .eq('schemaname', 'public')
+        .eq('tablename', 'projects')
+        .single();
+
+      if (!tableExists) {
+        console.log('Projects table does not exist');
+        setProjects([]);
+        return;
+      }
+
+      // If table exists, fetch projects
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          teams(name, id),
+          profiles!created_by(name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setProjects(data || []);
+    } catch (error) {
+
     const { data, error } = await supabase
       .from('projects')
       .select(`
@@ -81,72 +115,120 @@ export function ProjectsSection() {
       .order('created_at', { ascending: false });
 
     if (error) {
+ main
       console.error('Error fetching projects:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch projects",
+        description: error instanceof Error ? error.message : "Failed to fetch projects",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    setProjects(data || []);
-    setLoading(false);
   };
 
   const fetchTeams = async () => {
-    const { data, error } = await supabase
-      .from('teams')
-      .select('id, name, description')
-      .order('name');
+    try {
+      // Check if teams table exists
+      const { data: tableExists } = await supabase
+        .from('pg_tables')
+        .select('tablename')
+        .eq('schemaname', 'public')
+        .eq('tablename', 'teams')
+        .single();
 
-    if (error) {
+      if (!tableExists) {
+        console.log('Teams table does not exist');
+        setTeams([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, name, description')
+        .order('name');
+
+      if (error) throw error;
+
+      setTeams(data || []);
+    } catch (error) {
       console.error('Error fetching teams:', error);
-      return;
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to load teams",
+        variant: "destructive",
+      });
     }
-
-    setTeams(data || []);
   };
 
   const createProject = async () => {
     if (!user || !newProject.name.trim()) return;
 
-    const projectData = {
-      ...newProject,
-      created_by: user.id,
-      team_id: newProject.team_id || null,
-      due_date: newProject.due_date || null,
-    };
+    try {
+      // First check if projects table exists
+      const { data: tableExists } = await supabase
+        .from('pg_tables')
+        .select('tablename')
+        .eq('schemaname', 'public')
+        .eq('tablename', 'projects')
+        .single();
 
-    const { error } = await supabase
-      .from('projects')
-      .insert([projectData]);
+      if (!tableExists) {
+        throw new Error('Projects table does not exist in the database');
+      }
 
-    if (error) {
+      const projectData = {
+        name: newProject.name.trim(),
+        description: newProject.description.trim() || null,
+        status: newProject.status,
+        priority: newProject.priority,
+        team_id: newProject.team_id || null,
+        due_date: newProject.due_date ? new Date(newProject.due_date).toISOString() : null,
+        created_by: user.id,
+      };
+
+      console.log('Creating project with data:', projectData);
+
+      const { data, error } = await supabase
+        .from('projects')
+        .insert([projectData])
+        .select(`
+          *,
+          teams(name, id),
+          profiles!projects_created_by_fkey(name)
+        `);
+
+      if (error) throw error;
+
+      console.log('Project created successfully:', data);
+
+      // Add the new project to the list
+      if (data && data[0]) {
+        setProjects(prev => [data[0], ...prev]);
+      }
+
+      toast({
+        title: "Success",
+        description: "Project created successfully",
+      });
+
+      setShowCreateDialog(false);
+      setNewProject({
+        name: "",
+        description: "",
+        status: "active",
+        priority: "medium",
+        team_id: "",
+        due_date: "",
+      });
+    } catch (error) {
       console.error('Error creating project:', error);
       toast({
         title: "Error",
-        description: "Failed to create project",
+        description: error instanceof Error ? error.message : "Failed to create project",
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Success",
-      description: "Project created successfully",
-    });
-
-    setShowCreateDialog(false);
-    setNewProject({
-      name: "",
-      description: "",
-      status: "active",
-      priority: "medium",
-      team_id: "",
-      due_date: "",
-    });
-    fetchProjects();
   };
 
   const getPriorityColor = (priority: string) => {
@@ -168,8 +250,9 @@ export function ProjectsSection() {
   };
 
   const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = project.name.toLowerCase().includes(searchLower) ||
+                         (project.description?.toLowerCase() || '').includes(searchLower);
     const matchesStatus = statusFilter === "all" || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -189,7 +272,10 @@ export function ProjectsSection() {
         
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-primary hover:opacity-90">
+            <Button 
+              className="bg-gradient-primary hover:opacity-90 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+              variant="hero"
+            >
               <Plus className="h-4 w-4 mr-2" />
               New Project
             </Button>
@@ -292,19 +378,19 @@ export function ProjectsSection() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <div className="relative flex-1 group">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 transition-colors duration-200 group-focus-within:text-primary" />
           <Input
             placeholder="Search projects..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 border-muted-foreground/20 hover:border-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
           />
         </div>
         
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-48">
-            <Filter className="h-4 w-4 mr-2" />
+          <SelectTrigger className="w-full sm:w-48 hover:border-primary/50 transition-colors duration-200">
+            <Filter className="h-4 w-4 mr-2 text-muted-foreground group-hover:text-primary transition-colors" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -319,14 +405,24 @@ export function ProjectsSection() {
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProjects.map((project) => (
-          <Card key={project.id} className="bg-card hover:shadow-smooth transition-all duration-200">
+          <Card 
+            key={project.id} 
+            className="bg-card hover:shadow-smooth hover:shadow-brand/10 hover:-translate-y-1 transition-all duration-300 border border-border/50 hover:border-primary/30 group"
+          >
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
-                  {getStatusIcon(project.status)}
-                  <CardTitle className="text-lg">{project.name}</CardTitle>
+                  <span className="group-hover:scale-110 transition-transform duration-200">
+                    {getStatusIcon(project.status)}
+                  </span>
+                  <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200">
+                    {project.name}
+                  </CardTitle>
                 </div>
-                <Badge variant={getPriorityColor(project.priority)}>
+                <Badge 
+                  variant={getPriorityColor(project.priority)}
+                  className="group-hover:scale-105 transition-transform duration-200"
+                >
                   {project.priority}
                 </Badge>
               </div>
@@ -339,33 +435,36 @@ export function ProjectsSection() {
             
             <CardContent className="space-y-4">
               {project.teams && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-200">
+                  <Users className="h-4 w-4 text-primary/80 group-hover:text-primary transition-colors" />
                   <span>{project.teams.name}</span>
                 </div>
               )}
               
               {project.due_date && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-200">
+                  <Calendar className="h-4 w-4 text-primary/80 group-hover:text-primary transition-colors" />
                   <span>Due: {new Date(project.due_date).toLocaleDateString()}</span>
                 </div>
               )}
               
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-200">
+                <Avatar className="h-6 w-6 group-hover:ring-2 group-hover:ring-primary/30 transition-all duration-200">
+                  <AvatarFallback className="text-xs bg-secondary group-hover:bg-secondary/80 transition-colors">
                     {project.profiles?.name?.split(' ').map(n => n[0]).join('') || 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <span>Created by {project.profiles?.name || 'Unknown'}</span>
               </div>
               
-              <div className="flex justify-between items-center pt-2 border-t">
-                <Badge variant="outline" className="text-xs">
+              <div className="flex justify-between items-center pt-2 border-t border-border/50 group-hover:border-primary/30 transition-colors duration-200">
+                <Badge 
+                  variant="outline" 
+                  className="text-xs group-hover:bg-primary/5 group-hover:border-primary/30 group-hover:text-primary transition-colors duration-200"
+                >
                   {project.status}
                 </Badge>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors duration-200">
                   {new Date(project.created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -378,8 +477,9 @@ export function ProjectsSection() {
         <div className="text-center py-12">
           <p className="text-muted-foreground">No projects found.</p>
           <Button 
-            className="mt-4" 
+            className="mt-4 transition-all duration-300 hover:scale-105 hover:shadow-lg" 
             onClick={() => setShowCreateDialog(true)}
+            variant="hero"
           >
             Create your first project
           </Button>

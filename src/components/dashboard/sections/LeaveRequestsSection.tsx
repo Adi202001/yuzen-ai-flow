@@ -213,7 +213,7 @@ export function LeaveRequestsSection() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gradient-primary">Leave Requests</h1>
           <p className="text-muted-foreground mt-2">
@@ -223,7 +223,10 @@ export function LeaveRequestsSection() {
         
         <Dialog open={showNewRequest} onOpenChange={setShowNewRequest}>
           <DialogTrigger asChild>
-            <Button>
+            <Button 
+              className="transition-all duration-300 hover:shadow-lg hover:scale-105"
+              variant="hero"
+            >
               <Plus className="w-4 h-4 mr-2" />
               New Request
             </Button>
@@ -287,7 +290,11 @@ export function LeaveRequestsSection() {
                 />
               </div>
 
-              <Button onClick={submitRequest} className="w-full">
+              <Button 
+                onClick={submitRequest} 
+                className="w-full transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+                disabled={!startDate || !endDate || !leaveType}
+              >
                 Submit Request
               </Button>
             </div>
@@ -297,92 +304,124 @@ export function LeaveRequestsSection() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="group hover:shadow-brand transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Pending</p>
+                <p className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
                   {leaveRequests.filter(req => req.status === 'pending').length}
                 </p>
               </div>
-              <Clock className="h-8 w-8 text-warning" />
+              <div className="p-2 bg-warning/10 rounded-lg group-hover:bg-warning/20 transition-colors">
+                <Clock className="h-8 w-8 text-warning" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="group hover:shadow-brand transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Approved</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Approved</p>
+                <p className="text-2xl font-bold text-foreground group-hover:text-success transition-colors">
                   {leaveRequests.filter(req => req.status === 'approved').length}
                 </p>
               </div>
-              <Check className="h-8 w-8 text-success" />
+              <div className="p-2 bg-success/10 rounded-lg group-hover:bg-success/20 transition-colors">
+                <Check className="h-8 w-8 text-success" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="group hover:shadow-brand transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Rejected</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Rejected</p>
+                <p className="text-2xl font-bold text-foreground group-hover:text-destructive transition-colors">
                   {leaveRequests.filter(req => req.status === 'rejected').length}
                 </p>
               </div>
-              <X className="h-8 w-8 text-destructive" />
+              <div className="p-2 bg-destructive/10 rounded-lg group-hover:bg-destructive/20 transition-colors">
+                <X className="h-8 w-8 text-destructive" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Leave Requests List */}
-      <Card>
+      <Card className="shadow-elegant">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <Calendar className="w-5 h-5 text-primary" />
             {isHROrAdmin ? 'All Leave Requests' : 'Your Leave Requests'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {leaveRequests.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No leave requests found
+            <div className="text-center py-12">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg font-medium text-foreground mb-2">No leave requests found</p>
+              <p className="text-muted-foreground">
+                {isHROrAdmin 
+                  ? 'When employees submit leave requests, they will appear here' 
+                  : 'Click "New Request" to submit a leave request'}
+              </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {leaveRequests.map(request => (
                 <div
                   key={request.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
+                  className="group flex items-center justify-between p-4 border rounded-lg hover:shadow-smooth transition-all duration-300 hover:border-primary/30 hover:-translate-y-0.5"
                 >
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
                       {isHROrAdmin && (
-                        <span className="font-medium">{request.user_name}</span>
+                        <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                          {request.user_name}
+                        </span>
                       )}
-                      <Badge variant="outline">{request.leave_type}</Badge>
-                      <Badge className={statusColors[request.status as keyof typeof statusColors]}>
+                      <Badge 
+                        variant="outline" 
+                        className="border-primary/20 group-hover:border-primary/50 group-hover:bg-primary/5 transition-colors"
+                      >
+                        {request.leave_type}
+                      </Badge>
+                      <Badge 
+                        className={`${statusColors[request.status as keyof typeof statusColors]} group-hover:opacity-90 transition-opacity`}
+                      >
                         {request.status}
                       </Badge>
                     </div>
                     
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <p>
-                        <strong>Dates:</strong> {new Date(request.start_date).toLocaleDateString()} - {new Date(request.end_date).toLocaleDateString()}
-                        <span className="ml-2">({calculateDays(request.start_date, request.end_date)} days)</span>
+                    <div className="text-sm text-muted-foreground space-y-1 group-hover:text-foreground/80 transition-colors">
+                      <p className="flex flex-wrap items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                        <span className="font-medium">Dates:</span> 
+                        {new Date(request.start_date).toLocaleDateString()} - {new Date(request.end_date).toLocaleDateString()}
+                        <span className="ml-1 text-muted-foreground/80">
+                          ({calculateDays(request.start_date, request.end_date)} {calculateDays(request.start_date, request.end_date) === 1 ? 'day' : 'days'})
+                        </span>
                       </p>
                       {request.reason && (
-                        <p><strong>Reason:</strong> {request.reason}</p>
+                        <p className="truncate max-w-[90%]">
+                          <span className="font-medium">Reason:</span> {request.reason}
+                        </p>
                       )}
-                      <p><strong>Submitted:</strong> {new Date(request.created_at).toLocaleDateString()}</p>
+                      <p>
+                        <span className="font-medium">Submitted:</span> {new Date(request.created_at).toLocaleDateString()}
+                      </p>
                       {request.approved_at && request.approver_name && (
                         <p>
-                          <strong>{request.status === 'approved' ? 'Approved' : 'Rejected'} by:</strong> {request.approver_name} on {new Date(request.approved_at).toLocaleDateString()}
+                          <span className="font-medium">
+                            {request.status === 'approved' ? 'Approved' : 'Rejected'} by:
+                          </span>{' '}
+                          {request.approver_name} on {new Date(request.approved_at).toLocaleDateString()}
                         </p>
                       )}
                     </div>
@@ -390,22 +429,30 @@ export function LeaveRequestsSection() {
 
                   {/* Action buttons for HR/Admin */}
                   {isHROrAdmin && request.status === 'pending' && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => updateRequestStatus(request.id, 'approved')}
-                        className="text-success hover:bg-success hover:text-success-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateRequestStatus(request.id, 'approved');
+                        }}
+                        className="text-success hover:bg-success/10 hover:border-success/30 hover:shadow-sm transition-all duration-200"
                       >
                         <Check className="w-4 h-4" />
+                        <span className="sr-only">Approve</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => updateRequestStatus(request.id, 'rejected')}
-                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateRequestStatus(request.id, 'rejected');
+                        }}
+                        className="text-destructive hover:bg-destructive/10 hover:border-destructive/30 hover:shadow-sm transition-all duration-200"
                       >
                         <X className="w-4 h-4" />
+                        <span className="sr-only">Reject</span>
                       </Button>
                     </div>
                   )}

@@ -274,7 +274,10 @@ export function FilesSection() {
         <div className="flex gap-3">
           <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
             <DialogTrigger asChild>
-              <Button variant="hero" className="gap-2">
+              <Button 
+                variant="hero" 
+                className="gap-2 transition-all duration-300 hover:shadow-lg hover:scale-105"
+              >
                 <Upload className="h-5 w-5" />
                 Upload Files
               </Button>
@@ -283,33 +286,32 @@ export function FilesSection() {
               <DialogHeader>
                 <DialogTitle>Upload Files</DialogTitle>
               </DialogHeader>
-                <div className="space-y-6 py-4">
-                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                    <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-lg font-medium text-foreground mb-2">
-                      Select Files to Upload
+              <div className="space-y-6 py-4">
+                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                  <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium text-foreground mb-2">
+                    Select Files to Upload
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Choose files from your device
+                  </p>
+                  <Input
+                    type="file"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <Button variant="outline" asChild>
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      Browse Files
+                    </label>
+                  </Button>
+                  {selectedFile && (
+                    <p className="mt-2 text-sm text-foreground">
+                      Selected: {selectedFile.name}
                     </p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Choose files from your device
-                    </p>
-                    <Input
-                      type="file"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <Button variant="outline" asChild>
-                      <label htmlFor="file-upload" className="cursor-pointer">
-                        Browse Files
-                      </label>
-                    </Button>
-                    {selectedFile && (
-                      <p className="mt-2 text-sm text-foreground">
-                        Selected: {selectedFile.name}
-                      </p>
-                    )}
-                  </div>
-                
+                  )}
+                </div>
                 {uploadProgress > 0 && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -319,28 +321,27 @@ export function FilesSection() {
                     <Progress value={uploadProgress} className="h-2" />
                   </div>
                 )}
-
-                  <div className="flex justify-end gap-3">
-                    <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleFileUpload} disabled={!selectedFile || uploadProgress > 0}>
-                      {uploadProgress > 0 ? 'Uploading...' : 'Upload'}
-                    </Button>
-                  </div>
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleFileUpload} disabled={!selectedFile || uploadProgress > 0}>
+                    {uploadProgress > 0 ? 'Uploading...' : 'Upload'}
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
           <Button variant="outline" className="gap-2">
             <FolderOpen className="h-5 w-5" />
-            New Folder
+            Add Folder
           </Button>
         </div>
       </div>
 
       {/* Storage Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-elegant">
+        <Card className="group hover:shadow-brand transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -355,17 +356,17 @@ export function FilesSection() {
                 </div>
               </div>
             </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>of {storageStats.total}MB</span>
-                  <span>{Math.round((storageStats.used / storageStats.total) * 100)}%</span>
-                </div>
-                <Progress value={(storageStats.used / storageStats.total) * 100} className="h-2" />
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>of {storageStats.total}MB</span>
+                <span>{Math.round((storageStats.used / storageStats.total) * 100)}%</span>
               </div>
+              <Progress value={(storageStats.used / storageStats.total) * 100} className="h-2" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-elegant">
+        <Card className="group hover:shadow-brand transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6 text-center">
             <div className="flex items-center justify-center w-12 h-12 bg-success-light rounded-lg mx-auto mb-4">
               <FileText className="h-6 w-6 text-success" />
@@ -375,13 +376,13 @@ export function FilesSection() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-elegant">
+        <Card className="group hover:shadow-brand transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-accent-light rounded-lg mx-auto mb-4">
-              <Cloud className="h-6 w-6 text-accent" />
+            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg mx-auto mb-4">
+              <FolderOpen className="h-6 w-6 text-blue-500" />
             </div>
-            <h3 className="text-2xl font-bold text-foreground">Sync</h3>
-            <p className="text-sm text-muted-foreground">Google Drive Connected</p>
+            <h3 className="text-2xl font-bold text-foreground">0</h3>
+            <p className="text-sm text-muted-foreground">Total Folders</p>
           </CardContent>
         </Card>
       </div>
@@ -396,7 +397,7 @@ export function FilesSection() {
                 placeholder="Search files..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary/50"
               />
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -406,7 +407,7 @@ export function FilesSection() {
                   variant={selectedCategory === category ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedCategory(category)}
-                  className="capitalize"
+                  className="capitalize transition-all duration-200 hover:bg-primary/5 hover:border-primary/30 hover:shadow-sm"
                 >
                   {category === "all" ? "All Files" : category}
                 </Button>
@@ -425,20 +426,25 @@ export function FilesSection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredFiles.map((file) => (
               <div
                 key={file.id}
-                className="p-4 rounded-lg border border-border bg-card-elevated hover:shadow-smooth transition-all duration-200 group"
+                className="p-4 rounded-lg border border-border bg-card/50 hover:shadow-smooth transition-all duration-200 group h-full flex flex-col"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3 flex-1">
-                    {getFileIcon(file.file_type)}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-foreground truncate text-sm">
+                <div className="flex items-start justify-between mb-3 flex-1">
+                  <div className="flex items-start gap-3 w-full">
+                    <div className="flex-shrink-0">
+                      {getFileIcon(file.file_type)}
+                    </div>
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <h4 
+                        className="font-medium text-foreground text-sm mb-1 break-words line-clamp-2"
+                        title={file.name}
+                      >
                         {file.name}
                       </h4>
-                      <p className="text-xs text-muted-foreground">{formatFileSize(file.file_size)}</p>
+                      <p className="text-xs text-muted-foreground truncate">{formatFileSize(file.file_size)}</p>
                     </div>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -461,12 +467,20 @@ export function FilesSection() {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Badge className={getCategoryColor(file.category || 'General')} variant="outline">
-                    {file.category || 'General'}
-                  </Badge>
-                  <div className="text-xs text-muted-foreground">
-                    <p>Uploaded by {file.profiles?.name || 'Unknown'}</p>
+                <div className="space-y-2 mt-3 pt-3 border-t border-border/50">
+                  <div className="flex flex-wrap gap-1">
+                    <Badge 
+                      className={`${getCategoryColor(file.category || 'General')} truncate max-w-full`}
+                      variant="outline"
+                      title={file.category || 'General'}
+                    >
+                      {file.category || 'General'}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-0.5">
+                    <p className="truncate" title={`Uploaded by ${file.profiles?.name || 'Unknown'}`}>
+                      Uploaded by {file.profiles?.name || 'Unknown'}
+                    </p>
                     <p>{new Date(file.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
