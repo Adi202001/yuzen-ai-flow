@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Search, Filter, Calendar, Users, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +46,8 @@ interface Team {
 export function ProjectsSection() {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+  const navigate = useNavigate();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -386,9 +388,10 @@ export function ProjectsSection() {
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProjects.map((project) => (
-          <Card 
-            key={project.id} 
-            className="bg-card hover:shadow-smooth hover:shadow-brand/10 hover:-translate-y-1 transition-all duration-300 border border-border/50 hover:border-primary/30 group"
+          <Card
+            key={project.id}
+            onClick={() => navigate(`/project/${project.id}`)}
+            className="bg-card hover:shadow-smooth hover:shadow-brand/10 hover:-translate-y-1 transition-all duration-300 border border-border/50 hover:border-primary/30 group cursor-pointer"
           >
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
