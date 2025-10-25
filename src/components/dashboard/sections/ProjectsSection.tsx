@@ -61,7 +61,7 @@ export function ProjectsSection() {
     description: "",
     status: "active",
     priority: "medium",
-    team_id: "",
+    team_ids: [] as string[],
     due_date: "",
   });
 
@@ -159,18 +159,19 @@ export function ProjectsSection() {
         description: newProject.description.trim() || null,
         status: newProject.status,
         priority: newProject.priority,
-        team_id: newProject.team_id || null,
+        team_id: null, // Deprecated, using project_teams instead
         due_date: newProject.due_date ? new Date(newProject.due_date).toISOString() : null,
         created_by: user.id,
       };
 
       console.log('Creating project with data:', projectData);
-      console.log('User ID:', user.id);
+      console.log('Selected teams:', newProject.team_ids);
 
       const { data, error } = await supabase
         .from('projects')
         .insert([projectData])
-        .select();
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error:', error);
@@ -179,14 +180,32 @@ export function ProjectsSection() {
 
       console.log('Project created successfully:', data);
 
-      // Add the new project to the list
-      if (data && data[0]) {
-        setProjects(prev => [data[0], ...prev]);
+      // Assign teams to project
+      if (newProject.team_ids.length > 0 && data) {
+        const projectTeams = newProject.team_ids.map(teamId => ({
+          project_id: data.id,
+          team_id: teamId,
+        }));
+
+        const { error: teamError } = await supabase
+          .from('project_teams')
+          .insert(projectTeams);
+
+        if (teamError) {
+          console.error('Error assigning teams:', teamError);
+          toast({
+            title: "Warning",
+            description: "Project created but team assignment failed",
+            variant: "destructive",
+          });
+        }
       }
+
+      setProjects(prev => [data, ...prev]);
 
       toast({
         title: "Success",
-        description: "Project created successfully",
+        description: `Project created${newProject.team_ids.length > 0 ? ' and assigned to teams' : ''}`,
       });
 
       setShowCreateDialog(false);
@@ -195,11 +214,10 @@ export function ProjectsSection() {
         description: "",
         status: "active",
         priority: "medium",
-        team_id: "",
+        team_ids: [],
         due_date: "",
       });
 
-      // Refresh the projects list
       fetchProjects();
     } catch (error: any) {
       console.error('Error creating project:', error);
@@ -320,20 +338,36 @@ export function ProjectsSection() {
               </div>
               
               <div>
-                <Label htmlFor="team">Team</Label>
-                <Select value={newProject.team_id} onValueChange={(value) => setNewProject({ ...newProject, team_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select team (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">No team</SelectItem>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="teams">Teams (Multiple)</Label>
+                <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                  {teams.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No teams available</p>
+                  ) : (
+                    teams.map((team) => (
+                      <label key={team.id} className="flex items-center gap-2 cursor-pointer hover:bg-accent p-2 rounded">
+                        <input
+                          type="checkbox"
+                          checked={newProject.team_ids.includes(team.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewProject({
+                                ...newProject,
+                                team_ids: [...newProject.team_ids, team.id]
+                              });
+                            } else {
+                              setNewProject({
+                                ...newProject,
+                                team_ids: newProject.team_ids.filter(id => id !== team.id)
+                              });
+                            }
+                          }}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-sm">{team.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
               </div>
               
               <div>

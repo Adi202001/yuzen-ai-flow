@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MessagingWidget } from "./MessagingWidget";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -42,7 +43,6 @@ const getNavigationItems = (userRole: string) => {
     { id: "tasks", label: "Tasks", icon: CheckSquare },
     { id: "personal-todos", label: "Personal Todos", icon: ClipboardList },
     { id: "files", label: "Files", icon: FileText },
-    { id: "messages", label: "Messages", icon: MessageSquare },
     { id: "leave-requests", label: "Leave Requests", icon: ClipboardList },
   ];
 
@@ -203,6 +203,9 @@ export function DashboardLayout({ children, activeSection, onSectionChange }: Da
           </div>
         </main>
       </div>
+
+      {/* Messaging Widget - Visible on all tabs */}
+      <MessagingWidget />
     </div>
   );
 }

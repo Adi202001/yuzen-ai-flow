@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +39,8 @@ export function ProjectKanban({ projectId }: ProjectKanbanProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
@@ -110,6 +113,53 @@ export function ProjectKanban({ projectId }: ProjectKanbanProps) {
     }
   };
 
+  const updateTask = async () => {
+    if (!editingTask || !editingTask.title.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Task title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({
+          title: editingTask.title,
+          description: editingTask.description || null,
+          status: editingTask.status,
+          priority: editingTask.priority,
+        })
+        .eq('id', editingTask.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTasks(tasks.map(t => t.id === data.id ? data : t));
+      setShowEditDialog(false);
+      setEditingTask(null);
+
+      toast({
+        title: "Success",
+        description: "Task updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update task",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTaskClick = (task: Task) => {
+    setEditingTask(task);
+    setShowEditDialog(true);
+  };
+
   const getTasksByStatus = (status: string) => {
     return tasks.filter(task => task.status === status);
   };
@@ -173,7 +223,11 @@ export function ProjectKanban({ projectId }: ProjectKanbanProps) {
             </div>
             <div className="space-y-2">
               {getTasksByStatus(column.id).map((task) => (
-                <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <Card
+                  key={task.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleTaskClick(task)}
+                >
                   <CardHeader className="p-4">
                     <CardTitle className="text-sm">{task.title}</CardTitle>
                   </CardHeader>
@@ -190,6 +244,77 @@ export function ProjectKanban({ projectId }: ProjectKanbanProps) {
           </div>
         ))}
       </div>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+          </DialogHeader>
+          {editingTask && (
+            <div className="space-y-4 pt-4">
+              <div>
+                <Label htmlFor="edit-title">Title *</Label>
+                <Input
+                  id="edit-title"
+                  value={editingTask.title}
+                  onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
+                  placeholder="Enter task title"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editingTask.description || ""}
+                  onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                  placeholder="Enter task description"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select
+                    value={editingTask.status}
+                    onValueChange={(value) => setEditingTask({ ...editingTask, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todo">To Do</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="review">Review</SelectItem>
+                      <SelectItem value="done">Done</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-priority">Priority</Label>
+                  <Select
+                    value={editingTask.priority}
+                    onValueChange={(value) => setEditingTask({ ...editingTask, priority: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={updateTask} className="flex-1">Update Task</Button>
+                <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
