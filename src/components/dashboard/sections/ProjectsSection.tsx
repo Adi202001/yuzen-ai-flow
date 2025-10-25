@@ -49,10 +49,11 @@ export function ProjectsSection() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  
+
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
@@ -148,6 +149,8 @@ export function ProjectsSection() {
       return;
     }
 
+    setCreating(true);
+
     try {
       const projectData = {
         name: newProject.name.trim(),
@@ -204,6 +207,8 @@ export function ProjectsSection() {
         description: error?.message || error?.error_description || "Failed to create project",
         variant: "destructive",
       });
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -340,10 +345,10 @@ export function ProjectsSection() {
               </div>
               
               <div className="flex gap-2 pt-4">
-                <Button onClick={createProject} className="flex-1">
-                  Create Project
+                <Button onClick={createProject} className="flex-1" disabled={creating}>
+                  {creating ? "Creating..." : "Create Project"}
                 </Button>
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                <Button variant="outline" onClick={() => setShowCreateDialog(false)} disabled={creating}>
                   Cancel
                 </Button>
               </div>
