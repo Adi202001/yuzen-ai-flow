@@ -152,18 +152,6 @@ export function ProjectsSection() {
     if (!user || !newProject.name.trim()) return;
 
     try {
-      // First check if projects table exists
-      const { data: tableExists } = await supabase
-        .from('pg_tables')
-        .select('tablename')
-        .eq('schemaname', 'public')
-        .eq('tablename', 'projects')
-        .single();
-
-      if (!tableExists) {
-        throw new Error('Projects table does not exist in the database');
-      }
-
       const projectData = {
         name: newProject.name.trim(),
         description: newProject.description.trim() || null,
@@ -182,7 +170,7 @@ export function ProjectsSection() {
         .select(`
           *,
           teams(name, id),
-          profiles!projects_created_by_fkey(name)
+          profiles!created_by(name)
         `);
 
       if (error) throw error;
