@@ -9,7 +9,12 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git fetch:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git branch:*)",
+      "Bash(cat:*)",
+      "Bash(del \"c:\\Users\\Adity\\Downloads\\yuzen-ai-flow-main\\yuzen-ai-flow-main\\src\\integrations\\supabase\\types.ts\")",
+      "Bash(git reset:*)",
+      "Bash(npx supabase:*)"
     ],
     "deny": [],
     "ask": []
