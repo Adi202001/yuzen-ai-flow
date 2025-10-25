@@ -75,33 +75,23 @@ export function ProjectsSection() {
     setLoading(true);
 
     try {
-      // First, check if the projects table exists
-      const { data: tableExists } = await supabase
-        .from('pg_tables')
-        .select('tablename')
-        .eq('schemaname', 'public')
-        .eq('tablename', 'projects')
-        .single();
+      console.log('Fetching projects...');
 
-      if (!tableExists) {
-        console.log('Projects table does not exist');
-        setProjects([]);
-        return;
-      }
-
-      // If table exists, fetch projects
       const { data, error } = await supabase
         .from('projects')
-        .select(`
-          *,
-          teams(name, id),
-          profiles!created_by(name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('Projects data:', data);
+      console.log('Projects error:', error);
+
+      if (error) {
+        console.error('Error fetching projects:', error);
+        throw error;
+      }
 
       setProjects(data || []);
+      console.log('Projects set successfully, count:', data?.length || 0);
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast({
@@ -437,10 +427,10 @@ export function ProjectsSection() {
               <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-200">
                 <Avatar className="h-6 w-6 group-hover:ring-2 group-hover:ring-primary/30 transition-all duration-200">
                   <AvatarFallback className="text-xs bg-secondary group-hover:bg-secondary/80 transition-colors">
-                    {project.profiles?.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                    {project.created_by === user?.id ? 'ME' : 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <span>Created by {project.profiles?.name || 'Unknown'}</span>
+                <span>Created by {project.created_by === user?.id ? 'You' : 'User'}</span>
               </div>
               
               <div className="flex justify-between items-center pt-2 border-t border-border/50 group-hover:border-primary/30 transition-colors duration-200">
